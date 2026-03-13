@@ -1,950 +1,945 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>优化系统 · CementAI</title>
-<style>@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700;900&family=JetBrains+Mono:wght@400;500;600&family=Syne:wght@700;800&display=swap');
-
-:root {
-  --ink:    #09111c;
-  --ink2:   #101e2e;
-  --ink3:   #162438;
-  --steel:  #1e3a58;
-  --wire:   #2e5480;
-  --mist:   #5b8ab5;
-  --frost:  #9ec5e0;
-  --snow:   #ddeef8;
-  --white:  #f0f8ff;
-  --sky:    #38bdf8;
-  --sky2:   #0ea5e9;
-  --lime:   #4ade80;
-  --lime2:  #16a34a;
-  --amber:  #fbbf24;
-  --coral:  #f87171;
-  --violet: #a78bfa;
-  --nav-h:  62px;
-  --r:      10px;
-  --r-sm:   6px;
-  --shadow: 0 8px 40px rgba(0,0,0,0.5);
-  --glow-sky:  0 0 24px rgba(56,189,248,0.2);
-  --glow-lime: 0 0 24px rgba(74,222,128,0.2);
-}
-
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html { scroll-behavior: smooth; }
-body {
-  font-family: 'Noto Sans SC', sans-serif;
-  background: var(--ink);
-  color: var(--snow);
-  min-height: 100vh;
-  line-height: 1.6;
-  -webkit-font-smoothing: antialiased;
-}
-
-/* Grid bg */
-body::before {
-  content: '';
-  position: fixed; inset: 0; pointer-events: none; z-index: 0;
-  background-image:
-    linear-gradient(rgba(56,189,248,0.022) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(56,189,248,0.022) 1px, transparent 1px);
-  background-size: 36px 36px;
-}
-
-/* ══ NAV ══ */
-.nav {
-  position: fixed; top: 0; left: 0; right: 0; z-index: 200;
-  height: var(--nav-h);
-  background: rgba(9,17,28,0.88);
-  backdrop-filter: blur(16px) saturate(180%);
-  border-bottom: 1px solid rgba(46,84,128,0.35);
-  display: flex; align-items: center; padding: 0 32px; gap: 0;
-}
-.nav-logo {
-  display: flex; align-items: center; gap: 10px; text-decoration: none;
-  margin-right: 36px;
-}
-.nav-logo-hex {
-  width: 34px; height: 34px; border-radius: 8px; flex-shrink: 0;
-  background: linear-gradient(135deg, var(--sky), var(--lime));
-  display: flex; align-items: center; justify-content: center;
-  font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 800;
-  color: var(--ink); letter-spacing: -1px;
-}
-.nav-logo-text { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; color: var(--white); line-height: 1.2; }
-.nav-logo-sub { font-size: 10px; color: var(--mist); font-family: 'Noto Sans SC', sans-serif; font-weight: 300; }
-
-.nav-links { display: flex; align-items: center; gap: 4px; flex: 1; }
-.nav-link {
-  padding: 6px 14px; border-radius: 6px; text-decoration: none;
-  font-size: 13px; font-weight: 500; color: var(--mist); transition: all 0.18s;
-  position: relative;
-}
-.nav-link:hover { color: var(--frost); background: rgba(56,189,248,0.06); }
-.nav-link.active { color: var(--sky); background: rgba(56,189,248,0.1); }
-.nav-link.active::after {
-  content: ''; position: absolute; bottom: 2px; left: 50%; transform: translateX(-50%);
-  width: 18px; height: 2px; border-radius: 1px;
-  background: linear-gradient(90deg, var(--sky), var(--lime));
-}
-
-.nav-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
-.nav-btn {
-  padding: 7px 18px; border-radius: 6px; cursor: pointer;
-  font-size: 12px; font-weight: 700; letter-spacing: 0.5px; border: none;
-  background: linear-gradient(135deg, var(--sky2), var(--lime2));
-  color: var(--white); transition: all 0.18s; text-decoration: none;
-  display: inline-flex; align-items: center; gap: 6px;
-}
-.nav-btn:hover { opacity: 0.88; box-shadow: var(--glow-sky); transform: translateY(-1px); }
-
-/* ══ PAGE WRAPPER ══ */
-.page { padding-top: var(--nav-h); position: relative; z-index: 1; }
-
-/* ══ HERO SECTION ══ */
-.hero {
-  min-height: calc(100vh - var(--nav-h));
-  display: flex; align-items: center; justify-content: center;
-  padding: 60px 32px; position: relative; overflow: hidden;
-}
-.hero-bg {
-  position: absolute; inset: 0; pointer-events: none;
-  background:
-    radial-gradient(ellipse 60% 50% at 20% 50%, rgba(56,189,248,0.07) 0%, transparent 70%),
-    radial-gradient(ellipse 40% 60% at 80% 30%, rgba(74,222,128,0.05) 0%, transparent 60%),
-    radial-gradient(ellipse 50% 40% at 50% 90%, rgba(167,139,250,0.04) 0%, transparent 60%);
-}
-.hero-content { max-width: 720px; text-align: center; position: relative; }
-.hero-eyebrow {
-  display: inline-flex; align-items: center; gap: 8px;
-  font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--sky);
-  letter-spacing: 3px; text-transform: uppercase; margin-bottom: 24px;
-  padding: 5px 14px; border: 1px solid rgba(56,189,248,0.25);
-  border-radius: 20px; background: rgba(56,189,248,0.06);
-}
-.hero-eyebrow::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--lime); animation: pulse 1.8s infinite; }
-@keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.4;transform:scale(0.7)} }
-.hero-h1 {
-  font-family: 'Syne', sans-serif; font-size: clamp(2.4rem, 6vw, 3.8rem);
-  font-weight: 800; line-height: 1.1; margin-bottom: 20px; color: var(--white);
-}
-.hero-h1 em { font-style: normal; color: var(--sky); }
-.hero-h1 span {
-  background: linear-gradient(135deg, var(--sky), var(--lime));
-  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-}
-.hero-desc { font-size: 1rem; color: var(--mist); line-height: 1.75; margin-bottom: 36px; max-width: 560px; margin-left: auto; margin-right: auto; }
-.hero-btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
-.btn-hero-primary {
-  padding: 13px 32px; border-radius: 8px; cursor: pointer; border: none;
-  background: linear-gradient(135deg, var(--sky), var(--lime));
-  color: var(--ink); font-size: 14px; font-weight: 700; letter-spacing: 0.5px;
-  transition: all 0.2s; text-decoration: none; display: inline-flex; align-items: center; gap: 8px;
-}
-.btn-hero-primary:hover { opacity: 0.88; transform: translateY(-2px); box-shadow: 0 8px 32px rgba(56,189,248,0.35); }
-.btn-hero-ghost {
-  padding: 13px 32px; border-radius: 8px; cursor: pointer;
-  border: 1px solid rgba(56,189,248,0.3); background: rgba(56,189,248,0.05);
-  color: var(--sky); font-size: 14px; font-weight: 500;
-  transition: all 0.2s; text-decoration: none;
-}
-.btn-hero-ghost:hover { border-color: var(--sky); background: rgba(56,189,248,0.1); }
-
-/* Stats row */
-.hero-stats { display: flex; gap: 32px; justify-content: center; margin-top: 48px; flex-wrap: wrap; }
-.stat-item { text-align: center; }
-.stat-num { font-family: 'Syne', sans-serif; font-size: 2rem; font-weight: 800; color: var(--white); line-height: 1; }
-.stat-num span { color: var(--sky); }
-.stat-label { font-size: 11px; color: var(--mist); margin-top: 4px; letter-spacing: 1px; text-transform: uppercase; }
-.stat-divider { width: 1px; background: rgba(46,84,128,0.4); align-self: stretch; }
-
-/* ══ SECTION ══ */
-.section { padding: 80px 32px; max-width: 1200px; margin: 0 auto; }
-.section-center { text-align: center; margin-bottom: 52px; }
-.section-tag {
-  display: inline-block; font-family: 'JetBrains Mono', monospace;
-  font-size: 10px; color: var(--lime); letter-spacing: 3px; text-transform: uppercase;
-  margin-bottom: 12px;
-}
-.section-h2 {
-  font-family: 'Syne', sans-serif; font-size: clamp(1.6rem, 3.5vw, 2.4rem);
-  font-weight: 800; color: var(--white); line-height: 1.2; margin-bottom: 14px;
-}
-.section-h2 em { font-style: normal; color: var(--sky); }
-.section-desc { font-size: 0.95rem; color: var(--mist); max-width: 560px; margin: 0 auto; }
-
-/* ══ CARDS ══ */
-.card {
-  background: var(--ink2); border: 1px solid rgba(46,84,128,0.35);
-  border-radius: var(--r); padding: 24px; transition: all 0.22s;
-  position: relative; overflow: hidden;
-}
-.card::before {
-  content: ''; position: absolute; inset: 0; border-radius: inherit;
-  background: linear-gradient(135deg, rgba(56,189,248,0.04) 0%, transparent 60%);
-  opacity: 0; transition: opacity 0.22s;
-}
-.card:hover { border-color: rgba(56,189,248,0.3); transform: translateY(-3px); box-shadow: var(--shadow); }
-.card:hover::before { opacity: 1; }
-
-.card-icon {
-  width: 44px; height: 44px; border-radius: 10px; margin-bottom: 16px;
-  display: flex; align-items: center; justify-content: center; font-size: 20px;
-}
-.card-icon.sky { background: rgba(56,189,248,0.12); }
-.card-icon.lime { background: rgba(74,222,128,0.12); }
-.card-icon.amber { background: rgba(251,191,36,0.12); }
-.card-icon.violet { background: rgba(167,139,250,0.12); }
-.card-icon.coral { background: rgba(248,113,113,0.12); }
-
-.card-title { font-size: 15px; font-weight: 700; color: var(--white); margin-bottom: 8px; }
-.card-desc { font-size: 13px; color: var(--mist); line-height: 1.65; }
-
-/* ══ GRID ══ */
-.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
-.grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
-.grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
-@media (max-width: 900px) { .grid-3, .grid-4 { grid-template-columns: repeat(2, 1fr); } }
-@media (max-width: 600px) { .grid-3, .grid-2, .grid-4 { grid-template-columns: 1fr; } }
-
-/* ══ BADGE / TAG ══ */
-.badge {
-  display: inline-flex; align-items: center; gap: 5px;
-  padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 500;
-}
-.badge-sky { background: rgba(56,189,248,0.12); color: var(--sky); border: 1px solid rgba(56,189,248,0.25); }
-.badge-lime { background: rgba(74,222,128,0.12); color: var(--lime); border: 1px solid rgba(74,222,128,0.25); }
-.badge-amber { background: rgba(251,191,36,0.12); color: var(--amber); border: 1px solid rgba(251,191,36,0.25); }
-
-/* ══ DIVIDER ══ */
-.divider { border: none; border-top: 1px solid rgba(46,84,128,0.25); margin: 0; }
-
-/* ══ FOOTER ══ */
-footer {
-  border-top: 1px solid rgba(46,84,128,0.25); padding: 32px;
-  display: flex; align-items: center; justify-content: space-between;
-  flex-wrap: wrap; gap: 16px; position: relative; z-index: 1;
-}
-.footer-brand { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; color: var(--frost); }
-.footer-copy { font-size: 12px; color: var(--wire); }
-.footer-links { display: flex; gap: 20px; }
-.footer-link { font-size: 12px; color: var(--mist); text-decoration: none; transition: color 0.15s; }
-.footer-link:hover { color: var(--sky); }
-
-/* ══ UTILS ══ */
-.text-sky { color: var(--sky); }
-.text-lime { color: var(--lime); }
-.text-mist { color: var(--mist); }
-.text-white { color: var(--white); }
-.mono { font-family: 'JetBrains Mono', monospace; }
-.fw-bold { font-weight: 700; }
-.mt-8 { margin-top: 8px; } .mt-16 { margin-top: 16px; } .mt-24 { margin-top: 24px; } .mt-32 { margin-top: 32px; }
-.mb-8 { margin-bottom: 8px; } .mb-16 { margin-bottom: 16px; }
-
-/* ══ ANIMATIONS ══ */
-@keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: none; } }
-@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-@keyframes slideIn { from { opacity: 0; transform: translateX(-16px); } to { opacity: 1; transform: none; } }
-.anim-1 { animation: fadeUp 0.6s ease-out both; }
-.anim-2 { animation: fadeUp 0.6s 0.1s ease-out both; }
-.anim-3 { animation: fadeUp 0.6s 0.2s ease-out both; }
-.anim-4 { animation: fadeUp 0.6s 0.3s ease-out both; }
-.anim-5 { animation: fadeUp 0.6s 0.4s ease-out both; }
-
-/* ══ SCROLLBAR ══ */
-::-webkit-scrollbar { width: 5px; height: 5px; }
-::-webkit-scrollbar-track { background: var(--ink); }
-::-webkit-scrollbar-thumb { background: var(--steel); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: var(--wire); }
-</style>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>优化系统 — CementAI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
-body { overflow: hidden; height: 100vh; }
-.page { height: 100vh; display: flex; flex-direction: column; padding-top: 0; }
-.opt-layout {
-  display: grid;
-  grid-template-columns: 290px 1fr 290px;
-  flex: 1; min-height: 0;
-  margin-top: var(--nav-h);
-}
-
-/* ── SIDE PANELS ── */
-.opt-side {
-  border-right: 1px solid rgba(46,84,128,0.28);
-  overflow-y: auto; display: flex; flex-direction: column;
-  background: rgba(16,30,46,0.6);
-}
-.opt-side:last-child { border-right: none; border-left: 1px solid rgba(46,84,128,0.28); }
-.opt-side::-webkit-scrollbar { width: 3px; }
-.opt-side::-webkit-scrollbar-thumb { background: var(--steel); }
-
-.sec { padding: 14px 16px; border-bottom: 1px solid rgba(46,84,128,0.18); }
-.sec-hd {
-  font-size: 9.5px; font-weight: 700; letter-spacing: 2.5px; text-transform: uppercase;
-  color: var(--mist); margin-bottom: 12px; display: flex; align-items: center; gap: 6px;
-}
-.sec-hd::before { content:''; width:3px; height:11px; border-radius:2px; background:linear-gradient(var(--sky),var(--lime)); }
-
-/* ── PARAMS ── */
-.pi { margin-bottom: 13px; }
-.pi-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 5px; }
-.pi-lbl { font-size: 12px; color: var(--frost); font-weight: 500; }
-.pi-right { display: flex; align-items: center; gap: 4px; }
-.pi-num {
-  width: 68px; background: var(--ink); border: 1px solid var(--steel);
-  border-radius: var(--r-sm); padding: 4px 7px;
-  font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--sky);
-  text-align: right; outline: none; transition: border-color 0.18s;
-}
-.pi-num:focus { border-color: var(--sky); box-shadow: 0 0 0 2px rgba(56,189,248,0.1); }
-.pi-unit { font-size: 10px; color: var(--wire); min-width: 18px; }
-.pi-lock {
-  width: 22px; height: 22px; border-radius: 4px; cursor: pointer;
-  border: 1px solid var(--steel); background: transparent;
-  display: flex; align-items: center; justify-content: center; font-size: 10px;
-  transition: all 0.15s; flex-shrink: 0;
-}
-.pi-lock:hover { border-color: var(--mist); }
-.pi-lock.locked { border-color: var(--amber); background: rgba(251,191,36,0.07); }
-.pi-range { display: flex; align-items: center; gap: 5px; }
-.range-track { flex:1; height:3px; background:var(--ink3); border-radius:2px; overflow:hidden; }
-.range-fill { height:100%; background:linear-gradient(90deg,var(--sky),var(--lime)); transition:width 0.3s; }
-.rng-b { font-size:9px; color:var(--wire); font-family:'JetBrains Mono',monospace; }
-
-/* ── ALGO BUTTONS ── */
-.algo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
-.algo-btn {
-  padding: 7px 5px; border-radius: var(--r-sm); cursor: pointer;
-  border: 1px solid var(--steel); background: transparent;
-  color: var(--mist); font-size: 11px; font-weight: 500; text-align: center;
-  transition: all 0.15s; font-family: 'Noto Sans SC', sans-serif;
-}
-.algo-btn:hover { border-color: var(--mist); color: var(--frost); }
-.algo-btn.act { border-color: var(--sky); color: var(--sky); background: rgba(56,189,248,0.08); }
-
-/* ── CONFIG ── */
-.cfg-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 7px; }
-.cfg-lbl { font-size: 12px; color: var(--mist); }
-.cfg-inp {
-  width: 68px; background: var(--ink); border: 1px solid var(--steel);
-  border-radius: var(--r-sm); padding: 4px 7px;
-  font-family: 'JetBrains Mono', monospace; font-size: 12px;
-  color: var(--lime); text-align: right; outline: none; transition: border-color 0.18s;
-}
-.cfg-inp:focus { border-color: var(--lime); }
-
-/* ── OBJ ── */
-.obj-row { display: flex; align-items: center; gap: 7px; margin-bottom: 7px; }
-.obj-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
-.obj-lbl { font-size: 12px; color: var(--frost); flex: 1; }
-.obj-dir { font-size: 12px; color: var(--wire); }
-.obj-w {
-  width: 48px; background: var(--ink); border: 1px solid var(--steel);
-  border-radius: var(--r-sm); padding: 3px 6px;
-  font-family: 'JetBrains Mono', monospace; font-size: 12px;
-  color: var(--lime); text-align: right; outline: none;
-}
-
-/* ── BUTTONS ── */
-.btn-go {
-  width: 100%; padding: 11px; border-radius: var(--r-sm); cursor: pointer;
-  font-size: 13px; font-weight: 700; letter-spacing: 1px; border: none;
-  background: linear-gradient(135deg, var(--sky2), var(--lime2));
-  color: var(--white); transition: all 0.2s;
-}
-.btn-go:hover { opacity: 0.88; transform: translateY(-1px); box-shadow: var(--glow-sky); }
-.btn-go.running { background: linear-gradient(135deg, #dc2626, #b45309); animation: goPulse 1.2s infinite; }
-@keyframes goPulse { 0%,100%{box-shadow:none} 50%{box-shadow:0 0 20px rgba(220,38,38,0.3)} }
-.btn-sec {
-  width: 100%; padding: 8px; border-radius: var(--r-sm); cursor: pointer;
-  font-size: 11.5px; font-weight: 500; border: 1px solid var(--steel);
-  background: transparent; color: var(--mist); margin-top: 5px; transition: all 0.15s;
-}
-.btn-sec:hover { border-color: var(--mist); color: var(--frost); }
-
-/* ── CENTER ── */
-.opt-center { display: flex; flex-direction: column; min-width: 0; background: var(--ink); }
-
-/* metrics */
-.metrics-row { display: grid; grid-template-columns: repeat(4, 1fr); flex-shrink: 0; }
-.m-cell {
-  padding: 12px 16px; border-right: 1px solid rgba(46,84,128,0.2);
-  border-bottom: 1px solid rgba(46,84,128,0.2); position: relative; overflow: hidden;
-}
-.m-cell:last-child { border-right: none; }
-.m-cell::after { content:''; position:absolute; bottom:0; left:0; right:0; height:2px; }
-.m-cell.sky::after { background: linear-gradient(90deg, var(--sky), transparent); }
-.m-cell.lime::after { background: linear-gradient(90deg, var(--lime), transparent); }
-.m-cell.amber::after { background: linear-gradient(90deg, var(--amber), transparent); }
-.m-cell.violet::after { background: linear-gradient(90deg, var(--violet), transparent); }
-.m-name { font-size: 9.5px; color: var(--mist); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 4px; }
-.m-val { font-family: 'JetBrains Mono', monospace; font-size: 20px; font-weight: 600; line-height: 1; }
-.m-cell.sky .m-val { color: var(--sky); }
-.m-cell.lime .m-val { color: var(--lime); }
-.m-cell.amber .m-val { color: var(--amber); }
-.m-cell.violet .m-val { color: var(--violet); }
-.m-sub { font-size: 10px; color: var(--wire); margin-top: 2px; font-family: 'JetBrains Mono', monospace; }
-.m-sub.up { color: var(--lime); }
-.m-sub.dn { color: var(--coral); }
-
-@keyframes cellFlash { 0%{background:rgba(56,189,248,0.08)} 100%{background:transparent} }
-.flash { animation: cellFlash 0.6s ease-out; }
-
-/* progress */
-.prog-row {
-  display: flex; align-items: center; gap: 10px; padding: 8px 14px;
-  border-bottom: 1px solid rgba(46,84,128,0.18); flex-shrink: 0;
-}
-.prog-track { flex: 1; height: 5px; background: var(--ink3); border-radius: 3px; overflow: hidden; }
-.prog-fill { height: 100%; background: linear-gradient(90deg, var(--sky), var(--lime)); border-radius: 3px; transition: width 0.5s cubic-bezier(.4,0,.2,1); width: 0%; }
-.prog-lbl { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--mist); width: 34px; text-align: right; }
-
-/* chart */
-.chart-area { padding: 10px 14px; height: 185px; flex-shrink: 0; border-bottom: 1px solid rgba(46,84,128,0.18); }
-
-/* terminal */
-.term-wrap { flex: 1; min-height: 0; display: flex; flex-direction: column; }
-.term-hd {
-  padding: 7px 14px; border-bottom: 1px solid rgba(46,84,128,0.15);
-  display: flex; align-items: center; gap: 8px; flex-shrink: 0;
-  background: rgba(9,17,28,0.6);
-}
-.term-hd-lbl { font-size: 9.5px; letter-spacing: 2px; text-transform: uppercase; color: var(--mist); }
-.live { width: 6px; height: 6px; border-radius: 50%; background: var(--wire); margin-left: auto; }
-.live.on { background: var(--lime); animation: pulse 1.4s infinite; }
-.term { flex: 1; overflow-y: auto; padding: 8px 14px; font-family: 'JetBrains Mono', monospace; font-size: 11px; line-height: 1.6; }
-.term::-webkit-scrollbar { width: 3px; }
-.term::-webkit-scrollbar-thumb { background: var(--steel); }
-.tl { display: flex; gap: 7px; padding: 1px 0; }
-.tl-ts { color: var(--wire); flex-shrink: 0; }
-.tl-tag { flex-shrink: 0; font-weight: 700; }
-.tl-tag.s { color: var(--sky); }
-.tl-tag.a { color: var(--violet); }
-.tl-tag.n { color: var(--lime); }
-.tl-tag.w { color: var(--amber); }
-.tl-tag.e { color: var(--coral); }
-.tl-msg { color: var(--snow); word-break: break-all; }
-.hl { color: var(--lime); font-weight: 600; }
-.cur { animation: blink 1s infinite; }
-@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
-
-/* AI bar */
-.ai-bar {
-  border-top: 1px solid rgba(46,84,128,0.25); padding: 8px 14px;
-  display: flex; gap: 7px; align-items: flex-end;
-  background: rgba(9,17,28,0.7); flex-shrink: 0;
-}
-.ai-inp {
-  flex: 1; background: var(--ink2); border: 1px solid var(--steel);
-  border-radius: var(--r-sm); padding: 7px 11px;
-  font-family: 'Noto Sans SC', sans-serif; font-size: 12.5px; color: var(--white);
-  outline: none; resize: none; min-height: 36px; max-height: 90px; line-height: 1.5;
-  transition: border-color 0.18s;
-}
-.ai-inp::placeholder { color: var(--wire); }
-.ai-inp:focus { border-color: var(--sky); }
-.ai-send {
-  width: 36px; height: 36px; border-radius: var(--r-sm); cursor: pointer;
-  background: linear-gradient(135deg, var(--sky2), var(--lime2));
-  border: none; color: var(--white); font-size: 15px;
-  display: flex; align-items: center; justify-content: center;
-  flex-shrink: 0; transition: all 0.15s;
-}
-.ai-send:hover { opacity: 0.85; transform: scale(1.05); }
-.ai-send:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
-
-/* ── RIGHT ── */
-.best-card {
-  margin: 12px; padding: 14px;
-  background: linear-gradient(135deg, rgba(74,222,128,0.06), rgba(56,189,248,0.04));
-  border: 1px solid rgba(74,222,128,0.22); border-radius: var(--r); position: relative;
-}
-.best-card::before {
-  content: '★ 当前最优'; position: absolute; top: -8px; left: 10px;
-  font-size: 9px; font-weight: 700; color: var(--lime); background: var(--ink2); padding: 0 5px;
-}
-.best-num { font-family: 'JetBrains Mono', monospace; font-size: 30px; font-weight: 600; color: var(--lime); line-height: 1; }
-.best-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 9px; }
-.best-tag { font-family: 'JetBrains Mono', monospace; font-size: 10px; padding: 2px 7px; border-radius: 4px; background: rgba(56,189,248,0.07); border: 1px solid rgba(56,189,248,0.18); color: var(--sky); }
-
-.radar-wrap { padding: 8px 14px 4px; }
-.radar-wrap canvas { max-width: 250px; display: block; margin: 0 auto; }
-
-.prop-list { padding: 2px 12px 8px; }
-.prop-row { display: flex; justify-content: space-between; align-items: center; padding: 5px 0; border-bottom: 1px solid rgba(46,84,128,0.12); }
-.prop-row:last-child { border: none; }
-.prop-k { font-size: 11.5px; color: var(--mist); }
-.prop-v { font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: var(--lime); }
-
-.hist-item { padding: 6px 12px; border-bottom: 1px solid rgba(46,84,128,0.1); display: flex; align-items: center; gap: 7px; cursor: pointer; transition: background 0.15s; }
-.hist-item:hover { background: rgba(56,189,248,0.04); }
-.hist-n { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--wire); width: 22px; }
-.hist-bw { flex: 1; }
-.hist-row { display: flex; justify-content: space-between; font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: var(--sky); margin-bottom: 3px; }
-.hist-row.best { color: var(--lime); }
-.hist-bar { height: 2px; border-radius: 1px; background: linear-gradient(90deg, var(--sky), var(--lime)); }
-.hist-star { color: var(--lime); font-size: 10px; }
-
-@keyframes fadeUp { from{opacity:0;transform:translateY(5px)} to{opacity:1;transform:none} }
-.fade-in { animation: fadeUp 0.25s ease-out both; }
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans SC',sans-serif;background:#060e1a;color:#b8d4e8;line-height:1.6;font-size:14px}
+:root{--bg:#060e1a;--sur:#0b1929;--card:#0f2135;--border:#1a3350;--sky:#38bdf8;--lime:#4ade80;--amber:#fbbf24;--coral:#f87171;--violet:#a78bfa;--snow:#e8f4ff;--wire:#4a7a9b;--ink:#0a1628;--nav-h:62px}
+/* NAV */
+.nav{position:fixed;top:0;left:0;right:0;height:var(--nav-h);z-index:999;background:rgba(6,14,26,.95);border-bottom:1px solid var(--border);backdrop-filter:blur(10px);display:flex;align-items:center;padding:0 20px;gap:6px}
+.nav-logo{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:1.05rem;color:var(--sky);text-decoration:none;margin-right:auto}
+.nav-logo span{color:var(--lime)}
+.nav a:not(.nav-logo){font-size:.8rem;color:var(--wire);text-decoration:none;padding:6px 10px;border-radius:6px;transition:.15s}
+.nav a:not(.nav-logo):hover,.nav a.act{color:var(--snow);background:rgba(56,189,248,.1)}
+.nav a.act{color:var(--sky)}
+/* LAYOUT */
+.page{padding-top:calc(var(--nav-h)+16px);max-width:1200px;margin:0 auto;padding-left:16px;padding-right:16px;padding-bottom:40px}
+.page-title{display:flex;align-items:center;gap:12px;margin-bottom:16px;padding-top:8px}
+.page-title h2{font-size:1.15rem;font-weight:700;color:var(--snow)}
+.badge{display:inline-flex;align-items:center;padding:3px 9px;border-radius:12px;font-size:.7rem;font-family:'JetBrains Mono',monospace;font-weight:600}
+.b-sky{background:rgba(56,189,248,.15);color:var(--sky);border:1px solid rgba(56,189,248,.3)}
+.b-lime{background:rgba(74,222,128,.15);color:var(--lime);border:1px solid rgba(74,222,128,.3)}
+.b-amber{background:rgba(251,191,36,.15);color:var(--amber);border:1px solid rgba(251,191,36,.3)}
+.b-wire{background:rgba(74,122,155,.12);color:var(--wire);border:1px solid rgba(74,122,155,.25)}
+/* GRID */
+.main-grid{display:grid;grid-template-columns:300px 1fr;gap:14px}
+.right-grid{display:grid;grid-template-rows:auto auto 1fr;gap:14px}
+/* CARDS */
+.card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px}
+.card-title{font-family:'JetBrains Mono',monospace;font-size:.65rem;letter-spacing:.12em;text-transform:uppercase;color:var(--wire);margin-bottom:14px;display:flex;align-items:center;justify-content:space-between}
+/* PARAM ROWS */
+.param-row{margin-bottom:14px}
+.param-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:5px}
+.param-label{font-size:.82rem;color:var(--snow);font-weight:500}
+.param-val{font-family:'JetBrains Mono',monospace;font-size:.8rem;color:var(--sky);font-weight:600}
+.range-wrap{position:relative;height:6px;background:var(--border);border-radius:3px;cursor:pointer}
+.range-fill{position:absolute;left:0;top:0;height:100%;background:linear-gradient(90deg,var(--sky),var(--lime));border-radius:3px;pointer-events:none;transition:width .15s}
+input[type=range]{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;margin:0}
+.lock-btn{font-size:.68rem;padding:2px 7px;border-radius:4px;border:1px solid var(--border);background:transparent;color:var(--wire);cursor:pointer;font-family:'JetBrains Mono',monospace;transition:.15s;white-space:nowrap}
+.lock-btn:hover{color:var(--snow);border-color:var(--wire)}
+.lock-btn.locked{color:var(--amber);border-color:rgba(251,191,36,.4);background:rgba(251,191,36,.08)}
+/* METRICS */
+.metrics-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.metric{background:var(--sur);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center;transition:.3s}
+.metric.flash{background:rgba(56,189,248,.08);border-color:rgba(56,189,248,.3)}
+@keyframes flash{0%,100%{background:var(--sur)}50%{background:rgba(56,189,248,.1)}}
+.m-val{font-family:'JetBrains Mono',monospace;font-size:1.25rem;font-weight:700;color:var(--sky)}
+.m-label{font-size:.7rem;color:var(--wire);margin-top:2px}
+.m-sub{font-size:.68rem;font-family:'JetBrains Mono',monospace;margin-top:1px}
+.m-sub.up{color:var(--lime)}.m-sub.dn{color:var(--coral)}
+/* CHARTS ROW */
+.charts-row{display:grid;grid-template-columns:1fr 180px;gap:12px}
+.chart-wrap{position:relative;height:180px}
+/* CONTROLS */
+.ctrl-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:7px;border:none;cursor:pointer;font-size:.82rem;font-weight:600;transition:.15s;font-family:inherit}
+.btn-start{background:var(--sky);color:var(--ink);min-width:120px;justify-content:center}
+.btn-start:hover{background:#7dd3fc}
+.btn-start.running{background:var(--coral);color:#fff}
+.btn-start.running:hover{background:#fca5a5}
+.btn-sm{padding:6px 12px;font-size:.78rem}
+.btn-ghost{background:transparent;color:var(--wire);border:1px solid var(--border)}.btn-ghost:hover{color:var(--snow);border-color:var(--wire)}
+.btn-lime{background:var(--lime);color:var(--ink)}.btn-lime:hover{background:#86efac}
+.algo-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.algo-btn{padding:5px 12px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--wire);font-size:.75rem;cursor:pointer;font-family:'JetBrains Mono',monospace;font-weight:600;transition:.15s}
+.algo-btn:hover{color:var(--snow);border-color:var(--wire)}
+.algo-btn.act{background:rgba(56,189,248,.15);color:var(--sky);border-color:rgba(56,189,248,.4)}
+/* CONFIG */
+.cfg-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+.cfg-item label{display:block;font-size:.7rem;color:var(--wire);margin-bottom:4px}
+.cfg-item input{width:100%;background:var(--sur);border:1px solid var(--border);border-radius:5px;color:var(--snow);padding:5px 8px;font-size:.8rem;font-family:'JetBrains Mono',monospace;outline:none}
+.cfg-item input:focus{border-color:var(--sky)}
+/* PROGRESS */
+.prog-row{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.prog-bar{flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden}
+.prog-fill{height:100%;background:linear-gradient(90deg,var(--sky),var(--lime));border-radius:3px;transition:width .3s;width:0%}
+.prog-lbl{font-family:'JetBrains Mono',monospace;font-size:.75rem;color:var(--wire);min-width:36px;text-align:right}
+/* BOTTOM GRID */
+.bottom-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-top:14px}
+/* TERMINAL */
+.terminal{height:240px;overflow-y:auto;background:var(--sur);border:1px solid var(--border);border-radius:8px;padding:10px;font-family:'JetBrains Mono',monospace;font-size:.72rem}
+.tl{margin-bottom:3px;display:flex;gap:6px;flex-wrap:nowrap}
+.tl-ts{color:rgba(74,122,155,.5);flex-shrink:0}
+.tl-tag{border-radius:3px;padding:0 5px;flex-shrink:0;font-size:.65rem;font-weight:700}
+.tl-tag.s{background:rgba(74,222,128,.18);color:var(--lime)}
+.tl-tag.a{background:rgba(56,189,248,.18);color:var(--sky)}
+.tl-tag.n{background:rgba(74,122,155,.18);color:var(--wire)}
+.tl-tag.w{background:rgba(251,191,36,.18);color:var(--amber)}
+.tl-tag.e{background:rgba(248,113,113,.18);color:var(--coral)}
+.tl-msg{color:#93c5fd;line-height:1.5;word-break:break-all}
+/* HIST */
+.hist-scroll{height:240px;overflow-y:auto}
+.hist-item{padding:8px 10px;border-bottom:1px solid rgba(26,51,80,.5);cursor:pointer;transition:.15s;display:flex;align-items:center;gap:8px}
+.hist-item:hover{background:rgba(56,189,248,.06)}
+.hist-n{font-family:'JetBrains Mono',monospace;font-size:.7rem;color:var(--wire);min-width:28px}
+.hist-bw{flex:1}
+.hist-row{display:flex;justify-content:space-between;font-size:.78rem;margin-bottom:3px}
+.hist-row.best .hist-score{color:var(--lime);font-weight:700}
+.hist-bar{height:3px;background:var(--sky);border-radius:2px;opacity:.5}
+.hist-star{color:var(--amber);font-size:.9rem}
+.hist-cnt{font-size:.7rem;color:var(--wire)}
+/* PROPS */
+.prop-list{display:flex;flex-direction:column;gap:6px}
+.prop-row{display:flex;justify-content:space-between;font-size:.8rem}
+.prop-k{color:var(--wire)}
+.prop-v{color:var(--snow);font-weight:600;font-family:'JetBrains Mono',monospace}
+/* BEST */
+.best-score{font-family:'JetBrains Mono',monospace;font-size:2.2rem;font-weight:700;color:var(--lime);text-align:center;margin:8px 0}
+.best-tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px;justify-content:center}
+.best-tag{font-size:.68rem;font-family:'JetBrains Mono',monospace;padding:2px 8px;background:rgba(74,222,128,.12);border:1px solid rgba(74,222,128,.25);border-radius:4px;color:var(--lime)}
+/* LIVE DOT */
+.live-dot{width:7px;height:7px;border-radius:50%;background:var(--wire);flex-shrink:0;transition:.3s}
+.live-dot.on{background:var(--lime);box-shadow:0 0 6px var(--lime);animation:livepulse 1.2s infinite}
+@keyframes livepulse{0%,100%{opacity:1}50%{opacity:.4}}
+/* AI CHAT */
+.chat-area{height:140px;overflow-y:auto;padding:8px;background:var(--sur);border:1px solid var(--border);border-radius:8px;font-size:.78rem;margin-bottom:8px}
+.chat-row{display:flex;gap:8px;margin-bottom:8px;align-items:flex-start}
+.chat-name{font-size:.68rem;font-family:'JetBrains Mono',monospace;color:var(--wire);flex-shrink:0;min-width:32px}
+.chat-msg{color:#93c5fd;line-height:1.5}
+.chat-inp-row{display:flex;gap:6px}
+.chat-inp{flex:1;background:var(--sur);border:1px solid var(--border);border-radius:6px;color:var(--snow);padding:7px 10px;font-size:.8rem;font-family:inherit;resize:none;outline:none;max-height:80px}
+.chat-inp:focus{border-color:var(--sky)}
+.btn-send{background:var(--sky);color:var(--ink);border:none;border-radius:6px;padding:7px 14px;font-size:.8rem;font-weight:700;cursor:pointer;transition:.15s;flex-shrink:0}
+.btn-send:hover{background:#7dd3fc}
+.btn-send:disabled{opacity:.4;cursor:not-allowed}
+/* WEIGHT SLIDERS */
+.w-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.w-label{font-size:.75rem;color:var(--wire);min-width:60px}
+.w-slider{flex:1;height:4px;-webkit-appearance:none;background:var(--border);border-radius:2px;outline:none;cursor:pointer}
+.w-slider::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;border-radius:50%;background:var(--sky);cursor:pointer}
+.w-val{font-family:'JetBrains Mono',monospace;font-size:.72rem;color:var(--sky);min-width:30px;text-align:right}
+/* ANIM */
+@keyframes fadeIn{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:none}}
+.fade-in{animation:fadeIn .25s ease}
+/* RESPONSIVE */
+@media(max-width:900px){.main-grid{grid-template-columns:1fr}.charts-row{grid-template-columns:1fr}.bottom-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:600px){.metrics-grid{grid-template-columns:repeat(2,1fr)}.bottom-grid{grid-template-columns:1fr}.nav a:not(.nav-logo){font-size:.72rem;padding:5px 6px}}
 </style>
 </head>
 <body>
-
 <nav class="nav">
-  <a class="nav-logo" href="index.html">
-    <div class="nav-logo-hex">CA</div>
-    <div>
-      <div class="nav-logo-text">CementAI</div>
-      <div class="nav-logo-sub">智能配方优化平台</div>
-    </div>
-  </a>
-  <div class="nav-links">
-    <a class="nav-link" href="index.html">首页</a>
-    <a class="nav-link active" href="optimizer.html">优化系统</a>
-    <a class="nav-link" href="analysis.html">数据分析</a>
-    <a class="nav-link" href="docs.html">使用文档</a>
-    <a class="nav-link" href="about.html">关于我们</a>
-  </div>
-  <div class="nav-right">
-    <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--mist)" id="iterBadge">ITER 0/0</span>
-    <span class="badge badge-sky" id="statusBadge">就绪</span>
-  </div>
+  <a href="index.html" class="nav-logo">Cement<span>AI</span></a>
+  <a href="index.html">首页</a>
+  <a href="optimizer.html" class="act">优化系统</a>
+  <a href="analysis.html">数据分析</a>
+  <a href="docs.html">文档</a>
+  <a href="about.html">关于</a>
 </nav>
 
 <div class="page">
-<div class="opt-layout">
+  <div class="page-title">
+    <h2>🔬 智能优化系统</h2>
+    <span class="badge b-sky" id="statusBadge">待机</span>
+    <span class="badge b-wire" id="iterBadge">ITER 0/25</span>
+    <div class="live-dot" id="liveD"></div>
+    <span style="margin-left:auto;font-size:.75rem;color:var(--wire)" id="histCnt">0次实验</span>
+  </div>
 
-<!-- LEFT -->
-<div class="opt-side">
-  <div class="sec">
-    <div class="sec-hd">配方参数</div>
-    <!-- Ca/Si -->
-    <div class="pi">
-      <div class="pi-head">
-        <span class="pi-lbl">Ca/Si 摩尔比</span>
-        <div class="pi-right">
-          <input type="number" class="pi-num" id="p_casi" value="0.80" step="0.05" min="0.3" max="2.0">
-          <span class="pi-unit"></span>
-          <div class="pi-lock" id="lock_casi" onclick="toggleLock('casi')">🔓</div>
+  <div class="main-grid">
+    <!-- LEFT: params -->
+    <div>
+      <div class="card" style="margin-bottom:14px">
+        <div class="card-title">配方参数控制</div>
+
+        <div class="param-row">
+          <div class="param-header">
+            <span class="param-label">Ca/Si 比</span>
+            <div style="display:flex;align-items:center;gap:8px">
+              <span class="param-val" id="dv_casi">1.20</span>
+              <button class="lock-btn" id="lock_casi" onclick="toggleLock('casi')">🔓</button>
+            </div>
+          </div>
+          <div class="range-wrap">
+            <div class="range-fill" id="rf_casi" style="width:47%"></div>
+            <input type="range" id="p_casi" min="0.3" max="2.0" step="0.01" value="1.20" oninput="onSlide('casi',this.value)">
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:.65rem;color:var(--wire);margin-top:2px"><span>0.3</span><span>2.0</span></div>
+        </div>
+
+        <div class="param-row">
+          <div class="param-header">
+            <span class="param-label">Al/Si 比</span>
+            <div style="display:flex;align-items:center;gap:8px">
+              <span class="param-val" id="dv_alsi">0.15</span>
+              <button class="lock-btn" id="lock_alsi" onclick="toggleLock('alsi')">🔓</button>
+            </div>
+          </div>
+          <div class="range-wrap">
+            <div class="range-fill" id="rf_alsi" style="width:30%"></div>
+            <input type="range" id="p_alsi" min="0" max="0.5" step="0.01" value="0.15" oninput="onSlide('alsi',this.value)">
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:.65rem;color:var(--wire);margin-top:2px"><span>0</span><span>0.5</span></div>
+        </div>
+
+        <div class="param-row">
+          <div class="param-header">
+            <span class="param-label">水灰比 W/C</span>
+            <div style="display:flex;align-items:center;gap:8px">
+              <span class="param-val" id="dv_wc">0.44</span>
+              <button class="lock-btn" id="lock_wc" onclick="toggleLock('wc')">🔓</button>
+            </div>
+          </div>
+          <div class="range-wrap">
+            <div class="range-fill" id="rf_wc" style="width:35%"></div>
+            <input type="range" id="p_wc" min="0.3" max="0.7" step="0.01" value="0.44" oninput="onSlide('wc',this.value)">
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:.65rem;color:var(--wire);margin-top:2px"><span>0.3</span><span>0.7</span></div>
+        </div>
+
+        <div class="param-row">
+          <div class="param-header">
+            <span class="param-label">砂比 %</span>
+            <div style="display:flex;align-items:center;gap:8px">
+              <span class="param-val" id="dv_sand">35</span>
+              <button class="lock-btn" id="lock_sand" onclick="toggleLock('sand')">🔓</button>
+            </div>
+          </div>
+          <div class="range-wrap">
+            <div class="range-fill" id="rf_sand" style="width:44%"></div>
+            <input type="range" id="p_sand" min="0" max="80" step="1" value="35" oninput="onSlide('sand',this.value)">
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:.65rem;color:var(--wire);margin-top:2px"><span>0</span><span>80%</span></div>
+        </div>
+
+        <div class="param-row">
+          <div class="param-header">
+            <span class="param-label">养护时间 h</span>
+            <div style="display:flex;align-items:center;gap:8px">
+              <span class="param-val" id="dv_cure">72</span>
+              <button class="lock-btn" id="lock_cure" onclick="toggleLock('cure')">🔓</button>
+            </div>
+          </div>
+          <div class="range-wrap">
+            <div class="range-fill" id="rf_cure" style="width:42%"></div>
+            <input type="range" id="p_cure" min="1" max="168" step="1" value="72" oninput="onSlide('cure',this.value)">
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:.65rem;color:var(--wire);margin-top:2px"><span>1h</span><span>168h</span></div>
+        </div>
+
+        <div class="param-row" style="margin-bottom:0">
+          <div class="param-header">
+            <span class="param-label">养护温度 °C</span>
+            <div style="display:flex;align-items:center;gap:8px">
+              <span class="param-val" id="dv_temp">120</span>
+              <button class="lock-btn" id="lock_temp" onclick="toggleLock('temp')">🔓</button>
+            </div>
+          </div>
+          <div class="range-wrap">
+            <div class="range-fill" id="rf_temp" style="width:30%"></div>
+            <input type="range" id="p_temp" min="20" max="350" step="5" value="120" oninput="onSlide('temp',this.value)">
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:.65rem;color:var(--wire);margin-top:2px"><span>20°C</span><span>350°C</span></div>
         </div>
       </div>
-      <div class="pi-range"><span class="rng-b">0.3</span><div class="range-track"><div class="range-fill" id="rf_casi" style="width:29%"></div></div><span class="rng-b">2.0</span></div>
+
+      <!-- weights -->
+      <div class="card" style="margin-bottom:14px">
+        <div class="card-title">目标权重</div>
+        <div class="w-row"><span class="w-label">抗压强度</span><input type="range" class="w-slider" id="w_str" min="0" max="1" step="0.05" value="0.5" oninput="document.getElementById('wv_str').textContent=parseFloat(this.value).toFixed(2)"><span class="w-val" id="wv_str">0.50</span></div>
+        <div class="w-row"><span class="w-label">渗透率</span><input type="range" class="w-slider" id="w_perm" min="0" max="1" step="0.05" value="0.25" oninput="document.getElementById('wv_perm').textContent=parseFloat(this.value).toFixed(2)"><span class="w-val" id="wv_perm">0.25</span></div>
+        <div class="w-row"><span class="w-label">稠化时间</span><input type="range" class="w-slider" id="w_thick" min="0" max="1" step="0.05" value="0.15" oninput="document.getElementById('wv_thick').textContent=parseFloat(this.value).toFixed(2)"><span class="w-val" id="wv_thick">0.15</span></div>
+        <div class="w-row" style="margin-bottom:0"><span class="w-label">失水量</span><input type="range" class="w-slider" id="w_fluid" min="0" max="1" step="0.05" value="0.1" oninput="document.getElementById('wv_fluid').textContent=parseFloat(this.value).toFixed(2)"><span class="w-val" id="wv_fluid">0.10</span></div>
+      </div>
+
+      <!-- config -->
+      <div class="card">
+        <div class="card-title">优化配置</div>
+        <div class="cfg-row">
+          <div class="cfg-item"><label>最大迭代</label><input type="number" id="cfgMax" value="25" min="5" max="100"></div>
+          <div class="cfg-item"><label>预算(元)</label><input type="number" id="cfgBudget" value="5000" min="500"></div>
+          <div class="cfg-item"><label>探索率 ξ</label><input type="number" id="cfgXi" value="0.05" min="0" max="0.5" step="0.01"></div>
+        </div>
+        <div class="cfg-row" style="margin-bottom:0">
+          <div class="cfg-item"><label>迭代间隔(ms)</label><input type="number" id="cfgDelay" value="700" min="200" max="3000" step="100"></div>
+        </div>
+      </div>
     </div>
-    <!-- Al/Si -->
-    <div class="pi">
-      <div class="pi-head">
-        <span class="pi-lbl">Al/Si 摩尔比</span>
-        <div class="pi-right">
-          <input type="number" class="pi-num" id="p_alsi" value="0.100" step="0.01" min="0" max="0.5">
-          <span class="pi-unit"></span>
-          <div class="pi-lock" id="lock_alsi" onclick="toggleLock('alsi')">🔓</div>
+
+    <!-- RIGHT -->
+    <div class="right-grid">
+      <!-- top controls -->
+      <div class="card">
+        <div class="ctrl-row">
+          <button class="btn btn-start" id="startBtn" onclick="handleStart()">▶ 启动优化</button>
+          <button class="btn btn-ghost btn-sm" onclick="exportCSV()">💾 导出CSV</button>
+          <div style="margin-left:auto;display:flex;align-items:center;gap:6px">
+            <span style="font-size:.72rem;color:var(--wire)">累计成本:</span>
+            <span class="badge b-amber" id="costBadge" style="font-family:'JetBrains Mono',monospace">0 元</span>
+          </div>
+        </div>
+        <div style="font-size:.72rem;color:var(--wire);margin-bottom:8px">选择算法:</div>
+        <div class="algo-row">
+          <button class="algo-btn act" onclick="setAlgo('BO')">贝叶斯优化</button>
+          <button class="algo-btn" onclick="setAlgo('GA')">遗传算法</button>
+          <button class="algo-btn" onclick="setAlgo('PSO')">粒子群</button>
+          <button class="algo-btn" onclick="setAlgo('CMAES')">CMA-ES</button>
+          <button class="algo-btn" onclick="setAlgo('HYBRID')">混合策略</button>
+        </div>
+        <div class="prog-row">
+          <div class="prog-bar"><div class="prog-fill" id="progFill"></div></div>
+          <span class="prog-lbl" id="progLbl">0%</span>
         </div>
       </div>
-      <div class="pi-range"><span class="rng-b">0</span><div class="range-track"><div class="range-fill" id="rf_alsi" style="width:20%"></div></div><span class="rng-b">0.5</span></div>
-    </div>
-    <!-- W/C -->
-    <div class="pi">
-      <div class="pi-head">
-        <span class="pi-lbl">水灰比 W/C</span>
-        <div class="pi-right">
-          <input type="number" class="pi-num" id="p_wc" value="0.44" step="0.01" min="0.30" max="0.70">
-          <span class="pi-unit"></span>
-          <div class="pi-lock" id="lock_wc" onclick="toggleLock('wc')">🔓</div>
+
+      <!-- metrics -->
+      <div>
+        <div class="metrics-grid">
+          <div class="metric" id="mc0">
+            <div class="m-val" id="mv_str">—</div>
+            <div class="m-label">抗压强度 MPa</div>
+            <div class="m-sub" id="ms_str"></div>
+          </div>
+          <div class="metric" id="mc1">
+            <div class="m-val" id="mv_perm">—</div>
+            <div class="m-label">渗透率 mD</div>
+            <div class="m-sub" id="ms_perm"></div>
+          </div>
+          <div class="metric" id="mc2">
+            <div class="m-val" id="mv_score">—</div>
+            <div class="m-label">综合评分</div>
+            <div class="m-sub" id="ms_score"></div>
+          </div>
+          <div class="metric" id="mc3">
+            <div class="m-val" id="mv_cost">—</div>
+            <div class="m-label">本次成本 元</div>
+            <div class="m-sub" id="ms_cost"></div>
+          </div>
         </div>
       </div>
-      <div class="pi-range"><span class="rng-b">0.3</span><div class="range-track"><div class="range-fill" id="rf_wc" style="width:35%"></div></div><span class="rng-b">0.7</span></div>
-    </div>
-    <!-- Sand -->
-    <div class="pi">
-      <div class="pi-head">
-        <span class="pi-lbl">砂比</span>
-        <div class="pi-right">
-          <input type="number" class="pi-num" id="p_sand" value="35" step="1" min="0" max="80">
-          <span class="pi-unit">%</span>
-          <div class="pi-lock" id="lock_sand" onclick="toggleLock('sand')">🔓</div>
+
+      <!-- charts + best -->
+      <div class="charts-row">
+        <div class="card" style="padding:12px">
+          <div class="card-title">迭代收敛曲线</div>
+          <div class="chart-wrap"><canvas id="chartMain"></canvas></div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div class="card" style="padding:12px;flex:1">
+            <div class="card-title">性能雷达图</div>
+            <div style="height:120px"><canvas id="chartRadar"></canvas></div>
+          </div>
+          <div class="card" style="padding:12px">
+            <div class="card-title">当前最优</div>
+            <div class="best-score" id="bestScore">—</div>
+            <div class="best-tags" id="bestTags"></div>
+          </div>
         </div>
       </div>
-      <div class="pi-range"><span class="rng-b">0</span><div class="range-track"><div class="range-fill" id="rf_sand" style="width:44%"></div></div><span class="rng-b">80</span></div>
-    </div>
-    <!-- Cure -->
-    <div class="pi">
-      <div class="pi-head">
-        <span class="pi-lbl">养护时间</span>
-        <div class="pi-right">
-          <input type="number" class="pi-num" id="p_cure" value="24" step="1" min="1" max="168">
-          <span class="pi-unit">h</span>
-          <div class="pi-lock" id="lock_cure" onclick="toggleLock('cure')">🔓</div>
-        </div>
-      </div>
-      <div class="pi-range"><span class="rng-b">1</span><div class="range-track"><div class="range-fill" id="rf_cure" style="width:14%"></div></div><span class="rng-b">168</span></div>
-    </div>
-    <!-- Temp -->
-    <div class="pi" style="margin-bottom:0">
-      <div class="pi-head">
-        <span class="pi-lbl">养护温度</span>
-        <div class="pi-right">
-          <input type="number" class="pi-num" id="p_temp" value="180" step="5" min="20" max="350">
-          <span class="pi-unit">°C</span>
-          <div class="pi-lock" id="lock_temp" onclick="toggleLock('temp')">🔓</div>
-        </div>
-      </div>
-      <div class="pi-range"><span class="rng-b">20</span><div class="range-track"><div class="range-fill" id="rf_temp" style="width:49%"></div></div><span class="rng-b">350</span></div>
     </div>
   </div>
 
-  <div class="sec">
-    <div class="sec-hd">优化算法</div>
-    <div class="algo-grid">
-      <button class="algo-btn act" onclick="setAlgo('BO')">贝叶斯优化</button>
-      <button class="algo-btn" onclick="setAlgo('GA')">遗传算法</button>
-      <button class="algo-btn" onclick="setAlgo('PSO')">粒子群</button>
-      <button class="algo-btn" onclick="setAlgo('CMAES')">CMA-ES</button>
-      <button class="algo-btn" onclick="setAlgo('HYBRID')" style="grid-column:span 2">🔀 混合策略</button>
+  <!-- bottom row -->
+  <div class="bottom-grid">
+    <!-- terminal -->
+    <div class="card">
+      <div class="card-title">运行日志 <span style="font-weight:400;color:var(--wire)">实时输出</span></div>
+      <div class="terminal" id="terminal"><div style="color:var(--wire);font-size:.72rem">系统就绪，等待启动...</div></div>
     </div>
-  </div>
 
-  <div class="sec">
-    <div class="sec-hd">优化配置</div>
-    <div class="cfg-row"><span class="cfg-lbl">最大实验次数</span><input type="number" class="cfg-inp" id="cfgMax" value="25" min="5" max="100"></div>
-    <div class="cfg-row"><span class="cfg-lbl">总预算 (元)</span><input type="number" class="cfg-inp" id="cfgBudget" value="5000"></div>
-    <div class="cfg-row"><span class="cfg-lbl">探索系数 ξ</span><input type="number" class="cfg-inp" id="cfgXi" value="0.05" step="0.01" min="0.001"></div>
-    <div class="cfg-row"><span class="cfg-lbl">迭代延迟 (ms)</span><input type="number" class="cfg-inp" id="cfgDelay" value="800" min="300"></div>
-  </div>
+    <!-- hist -->
+    <div class="card">
+      <div class="card-title">实验历史 <span class="hist-cnt" id="histCntLabel">0次</span></div>
+      <div class="hist-scroll" id="histList"></div>
+    </div>
 
-  <div class="sec">
-    <div class="sec-hd">目标权重</div>
-    <div class="obj-row"><div class="obj-dot" style="background:var(--sky)"></div><span class="obj-lbl">抗压强度</span><span class="obj-dir" title="最大化">↑</span><input type="number" class="obj-w" id="w_str" value="0.5" step="0.05" min="0" max="1"></div>
-    <div class="obj-row"><div class="obj-dot" style="background:var(--lime)"></div><span class="obj-lbl">渗透率</span><span class="obj-dir" title="最小化">↓</span><input type="number" class="obj-w" id="w_perm" value="0.25" step="0.05" min="0" max="1"></div>
-    <div class="obj-row"><div class="obj-dot" style="background:var(--amber)"></div><span class="obj-lbl">稠化时间</span><span class="obj-dir" title="目标值">⇔</span><input type="number" class="obj-w" id="w_thick" value="0.15" step="0.05" min="0" max="1"></div>
-    <div class="obj-row" style="margin-bottom:0"><div class="obj-dot" style="background:var(--coral)"></div><span class="obj-lbl">失水量</span><span class="obj-dir" title="最小化">↓</span><input type="number" class="obj-w" id="w_fluid" value="0.1" step="0.05" min="0" max="1"></div>
-  </div>
-
-  <div class="sec" style="border-bottom:none">
-    <button class="btn-go" id="startBtn" onclick="handleStart()">▶ 启动优化</button>
-    <button class="btn-sec" onclick="exportCSV()">↓ 导出 CSV</button>
-    <button class="btn-sec" onclick="window.location.href='analysis.html'">📊 进入分析页面</button>
+    <!-- props + ai -->
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div class="card">
+        <div class="card-title">当前性能参数</div>
+        <div class="prop-list" id="propList">
+          <div class="prop-row"><span class="prop-k">抗压强度</span><span class="prop-v">—</span></div>
+          <div class="prop-row"><span class="prop-k">渗透率</span><span class="prop-v">—</span></div>
+          <div class="prop-row"><span class="prop-k">稠化时间</span><span class="prop-v">—</span></div>
+          <div class="prop-row"><span class="prop-k">失水量</span><span class="prop-v">—</span></div>
+          <div class="prop-row"><span class="prop-k">密度</span><span class="prop-v">—</span></div>
+        </div>
+      </div>
+      <div class="card" style="flex:1">
+        <div class="card-title">AI 专家对话</div>
+        <div class="chat-area" id="chatArea"></div>
+        <div class="chat-inp-row">
+          <textarea class="chat-inp" id="aiInp" rows="1" placeholder="询问配方建议..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChat();}"></textarea>
+          <button class="btn-send" id="aiSend" onclick="sendChat()">发送</button>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
-<!-- CENTER -->
-<div class="opt-center">
-  <div class="metrics-row">
-    <div class="m-cell sky" id="mc0"><div class="m-name">抗压强度</div><div class="m-val" id="mv_str">--</div><div class="m-sub" id="ms_str">MPa</div></div>
-    <div class="m-cell lime" id="mc1"><div class="m-name">渗透率</div><div class="m-val" id="mv_perm">--</div><div class="m-sub" id="ms_perm">mD</div></div>
-    <div class="m-cell amber" id="mc2"><div class="m-name">综合评分</div><div class="m-val" id="mv_score">--</div><div class="m-sub" id="ms_score">/ 100</div></div>
-    <div class="m-cell violet" id="mc3"><div class="m-name">累计成本</div><div class="m-val" id="mv_cost">0</div><div class="m-sub">元</div></div>
-  </div>
-  <div class="prog-row">
-    <div class="prog-track"><div class="prog-fill" id="progFill"></div></div>
-    <span class="prog-lbl" id="progLbl">0%</span>
-  </div>
-  <div class="chart-area">
-    <canvas id="chartMain" height="160"></canvas>
-  </div>
-  <div class="term-wrap">
-    <div class="term-hd">
-      <span class="term-hd-lbl">系统日志 / AI决策流</span>
-      <div class="live" id="liveD"></div>
-    </div>
-    <div class="term" id="terminal">
-      <div class="tl"><span class="tl-ts">[00:00]</span><span class="tl-tag s">[SYS]</span><span class="tl-msg">CementAI 优化系统已就绪 · 选择算法后点击启动<span class="cur">█</span></span></div>
-    </div>
-  </div>
-  <div class="ai-bar">
-    <textarea class="ai-inp" id="aiInp" rows="1" placeholder="问AI：当前配方为什么最优？如何进一步提升强度？..."
-      onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChat()}"></textarea>
-    <button class="ai-send" id="aiSend" onclick="sendChat()">↑</button>
-  </div>
-</div>
-
-<!-- RIGHT -->
-<div class="opt-side">
-  <div class="best-card">
-    <div class="best-num" id="bestScore">--.--</div>
-    <div style="font-size:9.5px;color:var(--mist);margin-top:2px;margin-bottom:8px">综合评分（最优配方）</div>
-    <div class="best-tags" id="bestTags"><span class="best-tag" style="color:var(--wire)">等待优化...</span></div>
-  </div>
-
-  <div class="sec" style="padding-top:10px">
-    <div class="sec-hd">性能雷达</div>
-    <div class="radar-wrap"><canvas id="chartRadar" height="200"></canvas></div>
-  </div>
-
-  <div class="sec" style="padding:8px 0 0">
-    <div class="sec-hd" style="padding:0 12px 8px">当前预测值</div>
-    <div class="prop-list" id="propList">
-      <div class="prop-row"><span class="prop-k">抗压强度</span><span class="prop-v" style="color:var(--wire)">-- MPa</span></div>
-      <div class="prop-row"><span class="prop-k">渗透率</span><span class="prop-v" style="color:var(--wire)">-- mD</span></div>
-      <div class="prop-row"><span class="prop-k">稠化时间</span><span class="prop-v" style="color:var(--wire)">-- min</span></div>
-      <div class="prop-row"><span class="prop-k">失水量</span><span class="prop-v" style="color:var(--wire)">-- mL</span></div>
-      <div class="prop-row"><span class="prop-k">密度</span><span class="prop-v" style="color:var(--wire)">-- g/cm³</span></div>
-    </div>
-  </div>
-
-  <div class="sec" style="padding:8px 0 0; border-bottom:none; flex:1; overflow:hidden; display:flex; flex-direction:column">
-    <div class="sec-hd" style="padding:0 12px 8px">
-      迭代历史
-      <span style="margin-left:auto;font-size:10px;color:var(--wire);letter-spacing:0;text-transform:none;font-weight:400" id="histCnt">0次</span>
-    </div>
-    <div id="histList" style="overflow-y:auto;flex:1"></div>
-  </div>
-</div>
-
-</div><!-- opt-layout -->
-</div><!-- page -->
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<!-- Chart.js CDN with fallback -->
 <script>
-'use strict';
-// ─── STATE ───────────────────────────────────────────
-let running=false,timer=null,iter=0,maxIter=25,totalBudget=5000,cumCost=0;
-let history=[],bestResult=null,locks={},algo='BO',xi=0.05,startTs=0;
-let gpX=[],gpY=[],mainChart,radarChart;
-const BOUNDS={casi:[0.3,2.0],alsi:[0,0.5],wc:[0.3,0.7],sand:[0,80],cure:[1,168],temp:[20,350]};
-const COST_W={casi:2,alsi:3,wc:1,sand:0.5,cure:0.8,temp:1.5};
+(function(){
+  var cdns=[
+    'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js',
+    'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js',
+    'https://unpkg.com/chart.js@4.4.0/dist/chart.umd.min.js'
+  ];
+  var idx=0;
+  function tryLoad(){
+    if(idx>=cdns.length){console.error('Chart.js load failed');return;}
+    var s=document.createElement('script');
+    s.src=cdns[idx++];
+    s.onload=function(){window._chartReady=true;};
+    s.onerror=function(){tryLoad();};
+    document.head.appendChild(s);
+  }
+  tryLoad();
+})();
+</script>
 
-// ─── SURROGATE MODEL ─────────────────────────────────
-function gauss(){let u=Math.random(),v=Math.random();while(u<1e-10){u=Math.random();v=Math.random();}return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);}
+<script>
+// ── STATE ──────────────────────────────────────────────
+var running=false, timer=null, iter=0, maxIter=25, totalBudget=5000, cumCost=0;
+var history=[], bestResult=null, locks={}, algo='BO', xi=0.05, startTs=0;
+var gpX=[], gpY=[], mainChart=null, radarChart=null;
+var clabels=[], csCur=[], csBest=[];
 
+var BOUNDS={casi:[0.3,2.0],alsi:[0,0.5],wc:[0.3,0.7],sand:[0,80],cure:[1,168],temp:[20,350]};
+var PKEYS=['casi','alsi','wc','sand','cure','temp'];
+var COST_W={casi:2,alsi:3,wc:1,sand:0.5,cure:0.8,temp:1.5};
+
+// ── SAFE DOM HELPERS ───────────────────────────────────
+function el(id){return document.getElementById(id);}
+function txt(id,v){var e=el(id);if(e)e.textContent=v;}
+function htm(id,v){var e=el(id);if(e)e.innerHTML=v;}
+function cls(id,v){var e=el(id);if(e)e.className=v;}
+function addC(id,c){var e=el(id);if(e)e.classList.add(c);}
+function remC(id,c){var e=el(id);if(e)e.classList.remove(c);}
+
+// ── MATH ───────────────────────────────────────────────
+function gauss(){
+  var u=Math.random(), v=Math.random();
+  while(u<1e-10){u=Math.random();v=Math.random();}
+  return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);
+}
+function erf(x){
+  var t=1/(1+0.3275911*Math.abs(x));
+  var y=1-t*(0.254829592+t*(-0.284496736+t*(1.421413741+t*(-1.453152027+t*1.061405429))))*Math.exp(-x*x);
+  return x<0?-y:y;
+}
+function Phi(z){return 0.5*(1+erf(z/Math.SQRT2));}
+function phi(z){return Math.exp(-0.5*z*z)/Math.sqrt(2*Math.PI);}
+
+// ── SIMULATION MODEL ───────────────────────────────────
 function predict(p){
-  const{casi,alsi,wc,sand,cure,temp}=p,σ=()=>gauss()*0.03;
-  const str=Math.max(5,45+(-18*(casi-1.2)**2+11)+(alsi>0.15?-12*(alsi-0.15):7*alsi)+(-55*(wc-0.38)-25*(wc-0.38)**2)+(-0.004*(sand-30)**2+2.5)+(temp<80?0.04*(temp-60):temp<250?0.1*(temp-80)*0.9:-0.02*(temp-250))+7*Math.log1p(cure/24))*(1+σ());
-  const perm=Math.max(0.001,(0.05+0.8*Math.exp(8*(wc-0.38))-0.02/(Math.abs(casi-1.1)+0.1)+0.001*sand+(temp>200?0.008*(temp-200):0))*(1+gauss()*0.12));
-  const thick=Math.max(30,(180+38*(wc-0.44)-0.45*(temp-150)-45*alsi-0.25*cure)*(1+gauss()*0.07));
-  const fluid=Math.max(5,(120+55*(wc-0.38)-0.28*sand-28*alsi)*(1+gauss()*0.12));
-  const density=+(1.9-0.28*wc+0.005*sand+0.0004*temp).toFixed(3);
-  return{str:+str.toFixed(2),perm:+perm.toFixed(4),thick:+thick.toFixed(1),fluid:+fluid.toFixed(1),density};
+  var n=function(){return gauss()*0.03;};
+  var str=Math.max(5,(
+    45
+    +(-18*Math.pow(p.casi-1.2,2)+11)
+    +(p.alsi>0.15?-12*(p.alsi-0.15):7*p.alsi)
+    +(-55*(p.wc-0.38)-25*Math.pow(p.wc-0.38,2))
+    +(-0.004*Math.pow(p.sand-30,2)+2.5)
+    +(p.temp<80?0.04*(p.temp-60):p.temp<250?0.1*(p.temp-80)*0.9:-0.02*(p.temp-250))
+    +7*Math.log1p(p.cure/24)
+  )*(1+n()));
+  var perm=Math.max(0.001,(
+    0.05+0.8*Math.exp(8*(p.wc-0.38))
+    -0.02/(Math.abs(p.casi-1.1)+0.1)
+    +0.001*p.sand
+    +(p.temp>200?0.008*(p.temp-200):0)
+  )*(1+gauss()*0.12));
+  var thick=Math.max(30,(180+38*(p.wc-0.44)-0.45*(p.temp-150)-45*p.alsi-0.25*p.cure)*(1+gauss()*0.07));
+  var fluid=Math.max(5,(120+55*(p.wc-0.38)-0.28*p.sand-28*p.alsi)*(1+gauss()*0.12));
+  var density=parseFloat((1.9-0.28*p.wc+0.005*p.sand+0.0004*p.temp).toFixed(3));
+  return{
+    str:parseFloat(str.toFixed(2)),
+    perm:parseFloat(perm.toFixed(4)),
+    thick:parseFloat(thick.toFixed(1)),
+    fluid:parseFloat(fluid.toFixed(1)),
+    density:density
+  };
 }
 
-function score(f){
-  const ws=+$('w_str').value,wp=+$('w_perm').value,wt=+$('w_thick').value,wf=+$('w_fluid').value;
-  const s=Math.min(1,f.str/80),p=Math.max(0,1-f.perm/0.5),t=Math.max(0,1-Math.abs(f.thick-150)/150),fl=Math.max(0,1-f.fluid/150);
-  return +((ws*s+wp*p+wt*t+wf*fl)/(ws+wp+wt+wf||1)*100).toFixed(3);
+function calcScore(f){
+  var ws=parseFloat(el('w_str').value)||0.5;
+  var wp=parseFloat(el('w_perm').value)||0.25;
+  var wt=parseFloat(el('w_thick').value)||0.15;
+  var wf=parseFloat(el('w_fluid').value)||0.1;
+  var s=Math.min(1,f.str/80);
+  var p=Math.max(0,1-f.perm/0.5);
+  var t=Math.max(0,1-Math.abs(f.thick-150)/150);
+  var fl=Math.max(0,1-f.fluid/150);
+  var total=ws+wp+wt+wf||1;
+  return parseFloat(((ws*s+wp*p+wt*t+wf*fl)/total*100).toFixed(3));
 }
 
-function expCost(params){let c=100;for(const[k,cw]of Object.entries(COST_W)){const[lo,hi]=BOUNDS[k];c+=((params[k]-lo)/(hi-lo))*cw*20;}return+c.toFixed(1);}
-
-// ─── OPTIMIZATION ─────────────────────────────────────
-function clamp(v,k){return Math.max(BOUNDS[k][0],Math.min(BOUNDS[k][1],v));}
-function norm(params){return Object.keys(BOUNDS).map(k=>(params[k]-BOUNDS[k][0])/(BOUNDS[k][1]-BOUNDS[k][0]));}
-
-function rbf(a,b){return Math.exp(-0.5*a.reduce((s,v,i)=>(s+(v-b[i])**2/0.25),0));}
-
-function gpPredict(xn){
-  const n=gpX.length;
-  if(n<2)return{mu:0.5,sigma:1};
-  const K=Array.from({length:n},(_,i)=>Array.from({length:n},(_,j)=>rbf(gpX[i],gpX[j])+(i===j?1e-3:0)));
-  try{
-    const ki=inv(K),ks=gpX.map(x=>rbf(x,xn));
-    const mu=ks.reduce((s,k,i)=>s+k*ki[i].reduce((ss,v,j)=>ss+v*gpY[j],0),0);
-    const kss=rbf(xn,xn),var_=Math.max(1e-9,kss-ks.reduce((s,k,i)=>s+k*ki[i].reduce((ss,v,j)=>ss+v*ks[j],0),0));
-    return{mu,sigma:Math.sqrt(var_)};
-  }catch{return{mu:0.5,sigma:1};}
+function expCost(p){
+  var c=100;
+  for(var i=0;i<PKEYS.length;i++){
+    var k=PKEYS[i];
+    var lo=BOUNDS[k][0], hi=BOUNDS[k][1];
+    c+=((p[k]-lo)/(hi-lo))*COST_W[k]*20;
+  }
+  return parseFloat(c.toFixed(1));
 }
 
-function inv(M){
-  const n=M.length,A=M.map(r=>[...r]),I=Array.from({length:n},(_,i)=>Array.from({length:n},(_,j)=>i===j?1:0));
-  for(let c=0;c<n;c++){
-    let mx=c;for(let r=c+1;r<n;r++)if(Math.abs(A[r][c])>Math.abs(A[mx][c]))mx=r;
-    [A[c],A[mx]]=[A[mx],A[c]];[I[c],I[mx]]=[I[mx],I[c]];
-    const d=A[c][c];if(Math.abs(d)<1e-12)throw 0;
-    for(let j=0;j<n;j++){A[c][j]/=d;I[c][j]/=d;}
-    for(let r=0;r<n;r++)if(r!==c){const f=A[r][c];for(let j=0;j<n;j++){A[r][j]-=f*A[c][j];I[r][j]-=f*I[c][j];}}
+// ── GAUSSIAN PROCESS ───────────────────────────────────
+function normP(p){
+  return PKEYS.map(function(k){return (p[k]-BOUNDS[k][0])/(BOUNDS[k][1]-BOUNDS[k][0]);});
+}
+function rbf(a,b){
+  var s=0;
+  for(var i=0;i<a.length;i++) s+=Math.pow(a[i]-b[i],2)/0.25;
+  return Math.exp(-0.5*s);
+}
+function matInv(M){
+  var n=M.length;
+  var A=M.map(function(r){return r.slice();});
+  var I=Array.from({length:n},function(_,i){return Array.from({length:n},function(_,j){return i===j?1:0;});});
+  for(var c=0;c<n;c++){
+    var mx=c;
+    for(var r=c+1;r<n;r++) if(Math.abs(A[r][c])>Math.abs(A[mx][c])) mx=r;
+    var tmp=A[c];A[c]=A[mx];A[mx]=tmp; tmp=I[c];I[c]=I[mx];I[mx]=tmp;
+    var d=A[c][c];
+    if(Math.abs(d)<1e-12) throw new Error('singular');
+    for(var j=0;j<n;j++){A[c][j]/=d;I[c][j]/=d;}
+    for(var rr=0;rr<n;rr++){
+      if(rr!==c){var f=A[rr][c];for(var j2=0;j2<n;j2++){A[rr][j2]-=f*A[c][j2];I[rr][j2]-=f*I[c][j2];}}
+    }
   }
   return I;
 }
-
-function erf(x){const t=1/(1+0.3275911*Math.abs(x)),y=1-t*(0.254829592+t*(-0.284496736+t*(1.421413741+t*(-1.453152027+t*1.061405429))))*Math.exp(-x*x);return x<0?-y:y;}
-function Φ(z){return 0.5*(1+erf(z/Math.SQRT2));}
-function φ(z){return Math.exp(-0.5*z*z)/Math.sqrt(2*Math.PI);}
-
-function eiAcq(xn){
-  const{mu,sigma}=gpPredict(xn);
-  if(sigma<1e-9)return 0;
-  const best=(bestResult?.scoreVal??0)/100;
-  const z=(mu-best-xi)/sigma;
-  return Math.max(0,(mu-best-xi)*Φ(z)+sigma*φ(z));
+function gpPredict(xn){
+  var n=gpX.length;
+  if(n<2) return{mu:0.5,sigma:1};
+  try{
+    var K=Array.from({length:n},function(_,i){
+      return Array.from({length:n},function(_,j){return rbf(gpX[i],gpX[j])+(i===j?1e-3:0);});
+    });
+    var Ki=matInv(K);
+    var ks=gpX.map(function(x){return rbf(x,xn);});
+    var mu=0;
+    for(var i=0;i<n;i++){var dot=0;for(var j=0;j<n;j++) dot+=Ki[i][j]*gpY[j];mu+=ks[i]*dot;}
+    var kss=rbf(xn,xn), quad=0;
+    for(var i2=0;i2<n;i2++){var dot2=0;for(var j2=0;j2<n;j2++) dot2+=Ki[i2][j2]*ks[j2];quad+=ks[i2]*dot2;}
+    return{mu:mu,sigma:Math.sqrt(Math.max(1e-9,kss-quad))};
+  }catch(e){return{mu:0.5,sigma:1};}
 }
+function eiAcq(xn){
+  var r=gpPredict(xn), mu=r.mu, sigma=r.sigma;
+  if(sigma<1e-9) return 0;
+  var fBest=(bestResult?bestResult.scoreVal:0)/100;
+  var z=(mu-fBest-xi)/sigma;
+  return Math.max(0,(mu-fBest-xi)*Phi(z)+sigma*phi(z));
+}
+
+// ── PROPOSE ────────────────────────────────────────────
+function getParams(){
+  var p={};
+  for(var i=0;i<PKEYS.length;i++){
+    var k=PKEYS[i], inp=el('p_'+k);
+    p[k]=inp?parseFloat(inp.value):((BOUNDS[k][0]+BOUNDS[k][1])/2);
+  }
+  return p;
+}
+function clamp(v,k){return Math.max(BOUNDS[k][0],Math.min(BOUNDS[k][1],v));}
 
 function propose(cur){
-  const keys=Object.keys(BOUNDS);
-  const src=bestResult?bestResult.params:cur;
-  let bestX=null,bestEI=-Infinity;
-  for(let t=0;t<(history.length<5?1:30);t++){
-    const c={};
-    keys.forEach(k=>{
-      if(locks[k]){c[k]=cur[k];return;}
-      const[lo,hi]=BOUNDS[k];let v;
-      if(history.length<5){const seg=(history.length+keys.indexOf(k))%10;v=lo+((seg+Math.random())/10)*(hi-lo);}
-      else if(algo==='BO')v=src[k]+gauss()*(hi-lo)*Math.max(0.03,xi*(1-iter/maxIter));
-      else if(algo==='GA')v=Math.random()<0.6?src[k]+gauss()*(hi-lo)*0.2:lo+Math.random()*(hi-lo);
-      else if(algo==='PSO')v=src[k]+0.7*(src[k]-cur[k])+1.5*Math.random()*(src[k]-cur[k]);
-      else if(algo==='CMAES')v=src[k]+gauss()*(hi-lo)*Math.exp(-iter/maxIter*2)*0.25;
-      else v=iter%3===0?lo+Math.random()*(hi-lo):src[k]+gauss()*(hi-lo)*0.15;
-      const dec=k==='sand'||k==='cure'||k==='temp'?0:3;
-      c[k]=+clamp(v,k).toFixed(dec);
-    });
-    const ei=algo==='BO'?eiAcq(norm(c)):Math.random();
-    if(ei>bestEI){bestEI=ei;bestX=c;}
+  var src=bestResult?bestResult.params:cur;
+  var best=null, bestEI=-Infinity;
+  var trials=history.length<5?1:30;
+  for(var t=0;t<trials;t++){
+    var c={};
+    for(var i=0;i<PKEYS.length;i++){
+      var k=PKEYS[i];
+      if(locks[k]){c[k]=cur[k];continue;}
+      var lo=BOUNDS[k][0], hi=BOUNDS[k][1], v;
+      if(history.length<5){
+        v=lo+((t*PKEYS.length+i+Math.random())/Math.max(1,trials*PKEYS.length))*(hi-lo);
+      } else if(algo==='BO'){
+        v=src[k]+gauss()*(hi-lo)*Math.max(0.03,xi*(1-iter/maxIter));
+      } else if(algo==='GA'){
+        v=Math.random()<0.6?src[k]+gauss()*(hi-lo)*0.2:lo+Math.random()*(hi-lo);
+      } else if(algo==='PSO'){
+        v=src[k]+0.7*(src[k]-cur[k])+1.5*Math.random()*(src[k]-cur[k]);
+      } else if(algo==='CMAES'){
+        v=src[k]+gauss()*(hi-lo)*Math.exp(-iter/maxIter*2)*0.25;
+      } else {
+        v=iter%3===0?lo+Math.random()*(hi-lo):src[k]+gauss()*(hi-lo)*0.15;
+      }
+      var dec=(k==='sand'||k==='cure'||k==='temp')?0:3;
+      c[k]=parseFloat(clamp(v,k).toFixed(dec));
+    }
+    var score=algo==='BO'?eiAcq(normP(c)):Math.random();
+    if(score>bestEI){bestEI=score;best=c;}
   }
-  return bestX;
+  return best;
 }
 
-// ─── MAIN LOOP ────────────────────────────────────────
-function handleStart(){running?stopOpt():startOpt();}
+// ── MAIN LOOP ──────────────────────────────────────────
+function handleStart(){
+  if(running) stopOpt(); else startOpt();
+}
 
 function startOpt(){
-  running=true;iter=0;history=[];bestResult=null;cumCost=0;gpX=[];gpY=[];
+  if(!mainChart||!radarChart){
+    alert('图表初始化中，请等待1-2秒后再试');
+    return;
+  }
+  running=true; iter=0; history=[]; bestResult=null; cumCost=0; gpX=[]; gpY=[];
   startTs=Date.now();
-  maxIter=+$('cfgMax').value;totalBudget=+$('cfgBudget').value;xi=+$('cfgXi').value;
-  $('startBtn').textContent='■ 停止优化';$('startBtn').classList.add('running');
-  $('statusBadge').textContent='运行中';$('statusBadge').className='badge badge-lime';
-  $('liveD').classList.add('on');
-  clearChart();$('terminal').innerHTML='';$('histList').innerHTML='';
-  addLog('s',`优化启动 · 算法:<span class="hl">${algo}</span> · 最大迭代:<span class="hl">${maxIter}</span> · 预算:<span class="hl">${totalBudget}元</span>`);
-  addLog('a','初始化贝叶斯代理模型 + 高斯过程先验...');
-  addLog('s',`预测端点: <span class="hl">http://101.43.178.48/</span>`);
-  timer=setTimeout(runOne,+$('cfgDelay').value);
+  maxIter=parseInt(el('cfgMax').value)||25;
+  totalBudget=parseFloat(el('cfgBudget').value)||5000;
+  xi=parseFloat(el('cfgXi').value)||0.05;
+  txt('startBtn','■ 停止');
+  addC('startBtn','running');
+  txt('statusBadge','运行中');
+  cls('statusBadge','badge b-lime');
+  addC('liveD','on');
+  clabels.length=0; csCur.length=0; csBest.length=0;
+  if(mainChart) mainChart.update('none');
+  htm('terminal',''); htm('histList','');
+  txt('histCntLabel','0次');
+  addLog('s','优化启动 · 算法:'+algo+' · 迭代上限:'+maxIter+' · 预算:'+totalBudget+'元');
+  var delay=parseInt(el('cfgDelay').value)||700;
+  timer=setTimeout(runOne,delay);
 }
 
 function stopOpt(){
-  running=false;clearTimeout(timer);
-  $('startBtn').textContent='▶ 继续优化';$('startBtn').classList.remove('running');
-  $('statusBadge').textContent='已暂停';$('statusBadge').className='badge badge-amber';
-  $('liveD').classList.remove('on');
-  addLog('w',`已暂停 · 已完成:<span class="hl">${iter}/${maxIter}</span> · 累计成本:<span class="hl">${cumCost.toFixed(0)}元</span>`);
+  running=false; clearTimeout(timer);
+  txt('startBtn','▶ 继续');
+  remC('startBtn','running');
+  txt('statusBadge','已暂停');
+  cls('statusBadge','badge b-amber');
+  remC('liveD','on');
+  addLog('w','已暂停 · 完成'+iter+'/'+maxIter+' · 累计:'+cumCost.toFixed(0)+'元');
 }
 
 function runOne(){
   if(!running||iter>=maxIter||cumCost>=totalBudget){finishOpt();return;}
   iter++;
-  const cur=getP(),prop=propose(cur),cost=expCost(prop);
-  if(cumCost+cost>totalBudget){addLog('w','成本超限，优化终止');finishOpt();return;}
-  const changes=[];
-  for(const[k,v]of Object.entries(prop)){
-    const inp=$('p_'+k);if(Math.abs(v-+inp.value)>1e-6){inp.value=v;changes.push(`${k}→<span class="hl">${v}</span>`);updateBar(k,v);}
+  var cur=getParams();
+  var prop=propose(cur);
+  if(!prop){finishOpt();return;}
+  var cost=expCost(prop);
+  if(cumCost+cost>totalBudget){addLog('w','预算超限，优化终止');finishOpt();return;}
+  var changes=[];
+  for(var i=0;i<PKEYS.length;i++){
+    var k=PKEYS[i], inp=el('p_'+k);
+    if(inp&&Math.abs(prop[k]-parseFloat(inp.value))>1e-6){
+      inp.value=prop[k];
+      updateBar(k,prop[k]);
+      updateDisplay(k,prop[k]);
+      changes.push(k+'='+prop[k]);
+    }
   }
-  const f=predict(prop),sc=score(f);
+  var f=predict(prop);
+  var sc=calcScore(f);
   cumCost+=cost;
-  gpX.push(norm(prop));gpY.push(sc/100);
+  gpX.push(normP(prop)); gpY.push(sc/100);
   if(gpX.length>20){gpX.shift();gpY.shift();}
-  const isBest=!bestResult||sc>bestResult.scoreVal;
-  const rec={iter,params:prop,perf:f,scoreVal:sc,cost,cumCost};
-  history.push(rec);if(isBest)bestResult=rec;
+  var isBest=!bestResult||sc>bestResult.scoreVal;
+  var rec={iter:iter,params:prop,perf:f,scoreVal:sc,cost:cost,cumCost:cumCost};
+  history.push(rec);
+  if(isBest) bestResult=rec;
   updateUI(f,sc,isBest,rec,changes);
-  $('iterBadge').textContent=`ITER ${iter}/${maxIter}`;
-  timer=setTimeout(runOne,+$('cfgDelay').value);
+  txt('iterBadge','ITER '+iter+'/'+maxIter);
+  txt('costBadge',cumCost.toFixed(0)+' 元');
+  var delay=parseInt(el('cfgDelay').value)||700;
+  timer=setTimeout(runOne,delay);
 }
 
 function finishOpt(){
   running=false;
-  $('startBtn').textContent='↺ 重新优化';$('startBtn').classList.remove('running');
-  $('statusBadge').textContent='完成';$('statusBadge').className='badge badge-sky';
-  $('liveD').classList.remove('on');
-  addLog('s','══ 优化完成 ══');
+  txt('startBtn','↺ 重新优化');
+  remC('startBtn','running');
+  txt('statusBadge','完成');
+  cls('statusBadge','badge b-sky');
+  remC('liveD','on');
+  addLog('s','══ 优化完成 ══ 共'+iter+'次迭代，总成本'+cumCost.toFixed(0)+'元');
   if(bestResult){
-    const p=bestResult.params,f=bestResult.perf;
-    addLog('n',`最优配方: Ca/Si=<span class="hl">${p.casi}</span> Al/Si=<span class="hl">${p.alsi}</span> W/C=<span class="hl">${p.wc}</span>`);
-    addLog('n',`最优性能: 强度=<span class="hl">${f.str}MPa</span> 渗透率=<span class="hl">${f.perm}mD</span> 评分=<span class="hl">${bestResult.scoreVal.toFixed(2)}</span>`);
-    addLog('a','建议将最优配方提交机器人制备系统进行实验验证 ✓');
-    for(const[k,v]of Object.entries(bestResult.params)){$('p_'+k).value=v;updateBar(k,v);}
+    var p=bestResult.params, f=bestResult.perf;
+    addLog('n','最优: Ca/Si='+p.casi+' Al/Si='+p.alsi+' W/C='+p.wc+' 砂比='+p.sand+'%');
+    addLog('n','性能: 强度='+f.str+'MPa 渗透='+f.perm+'mD 稠化='+f.thick+'min 评分='+bestResult.scoreVal.toFixed(2));
+    for(var i=0;i<PKEYS.length;i++){
+      var k=PKEYS[i], inp=el('p_'+k);
+      if(inp){inp.value=bestResult.params[k];updateBar(k,bestResult.params[k]);updateDisplay(k,bestResult.params[k]);}
+    }
   }
 }
 
-// ─── UI ───────────────────────────────────────────────
-function $(id){return document.getElementById(id);}
-function getP(){return{casi:+$('p_casi').value,alsi:+$('p_alsi').value,wc:+$('p_wc').value,sand:+$('p_sand').value,cure:+$('p_cure').value,temp:+$('p_temp').value};}
-function updateBar(k,v){const[lo,hi]=BOUNDS[k];const el=$('rf_'+k);if(el)el.style.width=((v-lo)/(hi-lo)*100).toFixed(1)+'%';}
-
-const clabels=[],csCur=[],csBest=[];
-function clearChart(){clabels.length=0;csCur.length=0;csBest.length=0;mainChart.update('none');}
+// ── UI UPDATE ──────────────────────────────────────────
+function updateBar(k,v){
+  var lo=BOUNDS[k][0], hi=BOUNDS[k][1];
+  var rf=el('rf_'+k);
+  if(rf) rf.style.width=((v-lo)/(hi-lo)*100).toFixed(1)+'%';
+}
+function updateDisplay(k,v){
+  var dv=el('dv_'+k);
+  if(dv) dv.textContent=v;
+}
 
 function updateUI(f,sc,isBest,rec,changes){
-  const prev=history.length>1?history[history.length-2]:null;
-  $('mv_str').textContent=f.str.toFixed(1);
-  $('mv_perm').textContent=f.perm.toFixed(4);
-  $('mv_score').textContent=sc.toFixed(1);
-  $('mv_cost').textContent=cumCost.toFixed(0);
+  var prev=history.length>1?history[history.length-2]:null;
+  txt('mv_str',f.str.toFixed(1));
+  txt('mv_perm',f.perm.toFixed(4));
+  txt('mv_score',sc.toFixed(1));
+  txt('mv_cost',rec.cost.toFixed(0));
   if(prev){
-    const ds=f.str-prev.perf.str;$('ms_str').textContent=(ds>=0?'+':'')+ds.toFixed(2)+' MPa';$('ms_str').className='m-sub'+(ds>=0?' up':' dn');
-    const dsc=sc-prev.scoreVal;$('ms_score').textContent=(dsc>=0?'+':'')+dsc.toFixed(2);$('ms_score').className='m-sub'+(dsc>=0?' up':' dn');
+    var ds=f.str-prev.perf.str;
+    txt('ms_str',(ds>=0?'+':'')+ds.toFixed(2)+' MPa');
+    cls('ms_str','m-sub '+(ds>=0?'up':'dn'));
+    var dsc=sc-prev.scoreVal;
+    txt('ms_score',(dsc>=0?'+':'')+dsc.toFixed(2));
+    cls('ms_score','m-sub '+(dsc>=0?'up':'dn'));
   }
-  ['mc0','mc1','mc2','mc3'].forEach(id=>{$(id).classList.add('flash');setTimeout(()=>$(id).classList.remove('flash'),600);});
-  const pct=(iter/maxIter*100).toFixed(0);$('progFill').style.width=pct+'%';$('progLbl').textContent=pct+'%';
-  $('propList').innerHTML=`<div class="prop-row"><span class="prop-k">抗压强度</span><span class="prop-v">${f.str} MPa</span></div><div class="prop-row"><span class="prop-k">渗透率</span><span class="prop-v">${f.perm} mD</span></div><div class="prop-row"><span class="prop-k">稠化时间</span><span class="prop-v">${f.thick} min</span></div><div class="prop-row"><span class="prop-k">失水量</span><span class="prop-v">${f.fluid} mL</span></div><div class="prop-row"><span class="prop-k">密度</span><span class="prop-v">${f.density} g/cm³</span></div>`;
-  if(isBest){$('bestScore').textContent=sc.toFixed(2);const p=rec.params;$('bestTags').innerHTML=['Ca/Si:'+p.casi,'Al/Si:'+p.alsi,'W/C:'+p.wc,'砂比:'+p.sand+'%','养护:'+p.cure+'h','温度:'+p.temp+'°C'].map(t=>`<span class="best-tag">${t}</span>`).join('');}
-  const rv=[Math.min(100,f.str/80*100),Math.max(0,100-f.perm/0.5*100),Math.max(0,100-Math.abs(f.thick-150)/150*100),Math.max(0,100-f.fluid/150*100),Math.min(100,(f.density-1.5)/0.8*100)];
-  radarChart.data.datasets[0].data=rv;radarChart.update('none');
-  clabels.push(iter);csCur.push(sc);csBest.push(bestResult?bestResult.scoreVal:sc);mainChart.update('none');
+  // flash metrics
+  var mids=['mc0','mc1','mc2','mc3'];
+  for(var mi=0;mi<mids.length;mi++){
+    (function(id){
+      var e=el(id);
+      if(!e) return;
+      e.classList.add('flash');
+      setTimeout(function(){var ee=el(id);if(ee)ee.classList.remove('flash');},600);
+    })(mids[mi]);
+  }
+  // progress
+  var pct=(iter/maxIter*100).toFixed(0);
+  var pf=el('progFill'); if(pf) pf.style.width=pct+'%';
+  txt('progLbl',pct+'%');
+  // props
+  htm('propList',
+    '<div class="prop-row"><span class="prop-k">抗压强度</span><span class="prop-v">'+f.str+' MPa</span></div>'+
+    '<div class="prop-row"><span class="prop-k">渗透率</span><span class="prop-v">'+f.perm+' mD</span></div>'+
+    '<div class="prop-row"><span class="prop-k">稠化时间</span><span class="prop-v">'+f.thick+' min</span></div>'+
+    '<div class="prop-row"><span class="prop-k">失水量</span><span class="prop-v">'+f.fluid+' mL</span></div>'+
+    '<div class="prop-row"><span class="prop-k">密度</span><span class="prop-v">'+f.density+' g/cm³</span></div>'
+  );
+  if(isBest){
+    txt('bestScore',sc.toFixed(2));
+    var p2=rec.params;
+    htm('bestTags',
+      ['Ca/Si:'+p2.casi,'Al/Si:'+p2.alsi,'W/C:'+p2.wc,'砂比:'+p2.sand+'%','养护:'+p2.cure+'h','温度:'+p2.temp+'°C']
+      .map(function(t){return '<span class="best-tag">'+t+'</span>';}).join('')
+    );
+  }
+  // radar
+  var rv=[
+    Math.min(100,f.str/80*100),
+    Math.max(0,100-f.perm/0.5*100),
+    Math.max(0,100-Math.abs(f.thick-150)/150*100),
+    Math.max(0,100-f.fluid/150*100),
+    Math.min(100,(f.density-1.5)/0.8*100)
+  ];
+  if(radarChart){radarChart.data.datasets[0].data=rv;radarChart.update('none');}
+  // line chart
+  clabels.push(iter); csCur.push(sc); csBest.push(bestResult?bestResult.scoreVal:sc);
+  if(mainChart) mainChart.update('none');
+  // hist
   addHistItem(rec,isBest);
-  if(changes.length)addLog('a',`[AI→] ${changes.slice(0,3).join(' ')}${changes.length>3?' …':''}`);
-  addLog('n',`[→AI] 强度:<span class="hl">${f.str}MPa</span> 渗透:<span class="hl">${f.perm}mD</span> 稠化:<span class="hl">${f.thick}min</span>`);
-  const col=sc>70?'var(--lime)':sc>50?'var(--sky)':'var(--amber)';
-  addLog('n',`[评分] <span style="color:${col};font-weight:700">${sc.toFixed(2)}</span>/100${isBest?' ⭐':''}  成本:${rec.cost.toFixed(0)}元`);
+  txt('histCntLabel',history.length+'次');
+  // log
+  if(changes.length) addLog('a','调整: '+changes.slice(0,3).join(' ')+(changes.length>3?' ...':''));
+  var col=sc>70?'#4ade80':sc>50?'#38bdf8':'#fbbf24';
+  addLog('n','强度:<span style="color:#e8f4ff;font-weight:600">'+f.str+'MPa</span> 渗透:<span style="color:#e8f4ff;font-weight:600">'+f.perm+'mD</span> 评分:<span style="color:'+col+';font-weight:700">'+sc.toFixed(2)+'</span>'+(isBest?' ⭐':''));
 }
 
 function addHistItem(rec,isBest){
-  const d=document.createElement('div');d.className='hist-item fade-in';
-  d.innerHTML=`<span class="hist-n">#${rec.iter}</span><div class="hist-bw"><div class="hist-row${isBest?' best':''}"><span>${rec.scoreVal.toFixed(2)}</span><span style="color:var(--wire)">${rec.perf.str.toFixed(1)}MPa</span></div><div class="hist-bar" style="width:${Math.min(100,rec.scoreVal).toFixed(0)}%"></div></div>${isBest?'<span class="hist-star">★</span>':''}`;
-  d.onclick=()=>{for(const[k,v]of Object.entries(rec.params)){$('p_'+k).value=v;updateBar(k,v);}$('propList').innerHTML=`<div class="prop-row"><span class="prop-k">抗压强度</span><span class="prop-v">${rec.perf.str} MPa</span></div><div class="prop-row"><span class="prop-k">渗透率</span><span class="prop-v">${rec.perf.perm} mD</span></div><div class="prop-row"><span class="prop-k">稠化时间</span><span class="prop-v">${rec.perf.thick} min</span></div><div class="prop-row"><span class="prop-k">失水量</span><span class="prop-v">${rec.perf.fluid} mL</span></div><div class="prop-row"><span class="prop-k">密度</span><span class="prop-v">${rec.perf.density} g/cm³</span></div>`;};
-  $('histList').prepend(d);$('histCnt').textContent=history.length+'次';
+  var hl=el('histList'); if(!hl) return;
+  var d=document.createElement('div');
+  d.className='hist-item fade-in';
+  d.innerHTML=
+    '<span class="hist-n">#'+rec.iter+'</span>'+
+    '<div class="hist-bw">'+
+      '<div class="hist-row'+(isBest?' best':'')+'" style="display:flex;justify-content:space-between">'+
+        '<span style="color:'+(isBest?'var(--lime)':'var(--snow)')+'">'+rec.scoreVal.toFixed(2)+'</span>'+
+        '<span style="color:var(--wire);font-size:.72rem">'+rec.perf.str.toFixed(1)+'MPa</span>'+
+      '</div>'+
+      '<div class="hist-bar" style="width:'+Math.min(100,rec.scoreVal).toFixed(0)+'%;margin-top:4px"></div>'+
+    '</div>'+
+    (isBest?'<span class="hist-star">★</span>':'');
+  // closure for click
+  (function(r){
+    d.onclick=function(){
+      for(var i=0;i<PKEYS.length;i++){
+        var k=PKEYS[i], inp=el('p_'+k);
+        if(inp){inp.value=r.params[k];updateBar(k,r.params[k]);updateDisplay(k,r.params[k]);}
+      }
+      htm('propList',
+        '<div class="prop-row"><span class="prop-k">抗压强度</span><span class="prop-v">'+r.perf.str+' MPa</span></div>'+
+        '<div class="prop-row"><span class="prop-k">渗透率</span><span class="prop-v">'+r.perf.perm+' mD</span></div>'+
+        '<div class="prop-row"><span class="prop-k">稠化时间</span><span class="prop-v">'+r.perf.thick+' min</span></div>'+
+        '<div class="prop-row"><span class="prop-k">失水量</span><span class="prop-v">'+r.perf.fluid+' mL</span></div>'+
+        '<div class="prop-row"><span class="prop-k">密度</span><span class="prop-v">'+r.perf.density+' g/cm³</span></div>'
+      );
+    };
+  })(rec);
+  hl.insertBefore(d,hl.firstChild);
 }
 
-function addLog(t,msg){
-  const term=$('terminal');
-  const e=Math.floor((Date.now()-(startTs||Date.now()))/1000);
-  const ts=`[${String(Math.floor(e/60)).padStart(2,'0')}:${String(e%60).padStart(2,'0')}]`;
-  const tags={s:'SYS',a:'AI',n:'NET',w:'WARN',e:'ERR'};
-  const d=document.createElement('div');d.className='tl fade-in';
-  d.innerHTML=`<span class="tl-ts">${ts}</span><span class="tl-tag ${t}">[${tags[t]}]</span><span class="tl-msg">${msg}</span>`;
-  term.appendChild(d);term.scrollTop=term.scrollHeight;
+function addLog(type,msg){
+  var term=el('terminal'); if(!term) return;
+  var e=Math.floor((Date.now()-(startTs||Date.now()))/1000);
+  var m=Math.floor(e/60), s=e%60;
+  var ts='['+(m<10?'0':'')+m+':'+(s<10?'0':'')+s+']';
+  var labels={s:'SYS',a:'AI',n:'NET',w:'WARN',e:'ERR'};
+  var d=document.createElement('div');
+  d.className='tl fade-in';
+  d.innerHTML='<span class="tl-ts">'+ts+'</span><span class="tl-tag '+type+'">['+labels[type]+']</span><span class="tl-msg">'+msg+'</span>';
+  term.appendChild(d);
+  term.scrollTop=term.scrollHeight;
 }
 
-// ─── AI CHAT ─────────────────────────────────────────
-async function sendChat(){
-  const inp=$('aiInp');const text=inp.value.trim();if(!text)return;
-  inp.value='';inp.style.height='auto';$('aiSend').disabled=true;
-  const ctx=[];
-  if(bestResult){ctx.push(`最优配方: Ca/Si=${bestResult.params.casi} Al/Si=${bestResult.params.alsi} W/C=${bestResult.params.wc} 砂比=${bestResult.params.sand}% 养护${bestResult.params.cure}h 温度${bestResult.params.temp}°C`);ctx.push(`最优性能: 强度=${bestResult.perf.str}MPa 渗透率=${bestResult.perf.perm}mD 稠化=${bestResult.perf.thick}min 失水=${bestResult.perf.fluid}mL`);ctx.push(`综合评分: ${bestResult.scoreVal.toFixed(2)}/100`);}
-  ctx.push(`已完成${history.length}次实验 · 累计成本${cumCost.toFixed(0)}元`);
-  addLog('a',`[用户] <span style="color:var(--snow)">${text}</span>`);
-  try{
-    const resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system:`你是水泥浆配方AI优化专家，用简洁专业的中文回答。当前优化状态：
-${ctx.join('
-')}`,messages:[{role:'user',content:text}]})});
-    const data=await resp.json();
-    const reply=data.content?.[0]?.text||'（无响应）';
-    addLog('a',`[AI] <span style="color:var(--frost)">${reply.replace(/
-/g,'<br>')}</span>`);
-  }catch(e){addLog('e',`AI对话失败: ${e.message}`);}
-  $('aiSend').disabled=false;
+// ── AI CHAT ────────────────────────────────────────────
+function sendChat(){
+  var inp=el('aiInp'); if(!inp) return;
+  var text=inp.value.trim(); if(!text) return;
+  inp.value=''; inp.style.height='auto';
+  var sendBtn=el('aiSend'); if(sendBtn) sendBtn.disabled=true;
+  var ca=el('chatArea');
+  if(ca){
+    var ud=document.createElement('div');
+    ud.className='chat-row fade-in';
+    ud.innerHTML='<span class="chat-name">你</span><span class="chat-msg" style="color:var(--snow)">'+text+'</span>';
+    ca.appendChild(ud); ca.scrollTop=ca.scrollHeight;
+  }
+  var ctx=[];
+  if(bestResult){
+    ctx.push('最优配方: Ca/Si='+bestResult.params.casi+' Al/Si='+bestResult.params.alsi+' W/C='+bestResult.params.wc+' 砂比='+bestResult.params.sand+'% 养护'+bestResult.params.cure+'h 温度'+bestResult.params.temp+'C');
+    ctx.push('最优性能: 强度='+bestResult.perf.str+'MPa 渗透率='+bestResult.perf.perm+'mD 稠化='+bestResult.perf.thick+'min 失水='+bestResult.perf.fluid+'mL');
+    ctx.push('评分='+bestResult.scoreVal.toFixed(2)+'/100');
+  }
+  ctx.push('已完成'+history.length+'次实验，累计成本'+cumCost.toFixed(0)+'元，算法:'+algo);
+  var sysprompt='你是水泥浆配方AI优化专家，用简洁专业的中文回答。当前优化状态: '+ctx.join('; ');
+  fetch('https://api.anthropic.com/v1/messages',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({
+      model:'claude-sonnet-4-20250514',
+      max_tokens:1000,
+      system:sysprompt,
+      messages:[{role:'user',content:text}]
+    })
+  }).then(function(r){return r.json();}).then(function(data){
+    var reply=(data.content&&data.content[0]&&data.content[0].text)||'（无响应）';
+    if(ca){
+      var ad=document.createElement('div');
+      ad.className='chat-row fade-in';
+      ad.innerHTML='<span class="chat-name" style="color:var(--sky)">AI</span><span class="chat-msg">'+reply.replace(/\n/g,'<br>')+'</span>';
+      ca.appendChild(ad); ca.scrollTop=ca.scrollHeight;
+    }
+  }).catch(function(err){
+    if(ca){
+      var ed=document.createElement('div');
+      ed.className='chat-row fade-in';
+      ed.innerHTML='<span class="chat-name" style="color:var(--coral)">错误</span><span class="chat-msg" style="color:var(--coral)">'+err.message+'</span>';
+      ca.appendChild(ed); ca.scrollTop=ca.scrollHeight;
+    }
+  }).finally(function(){
+    var sb=el('aiSend'); if(sb) sb.disabled=false;
+  });
 }
 
-// ─── MISC ─────────────────────────────────────────────
-function setAlgo(a){algo=a;document.querySelectorAll('.algo-btn').forEach(b=>b.classList.toggle('act',b.textContent.trim().includes({BO:'贝叶斯',GA:'遗传',PSO:'粒子群',CMAES:'CMA',HYBRID:'混合'}[a]||'')));}
-function toggleLock(k){locks[k]=!locks[k];const el=$('lock_'+k);el.textContent=locks[k]?'🔒':'🔓';el.classList.toggle('locked',locks[k]);}
+// ── CONTROLS ───────────────────────────────────────────
+function setAlgo(a){
+  algo=a;
+  var map={BO:'贝叶斯优化',GA:'遗传算法',PSO:'粒子群',CMAES:'CMA-ES',HYBRID:'混合策略'};
+  var btns=document.querySelectorAll('.algo-btn');
+  for(var i=0;i<btns.length;i++){
+    var b=btns[i];
+    b.classList.toggle('act',b.textContent.trim()===map[a]);
+  }
+}
+
+function toggleLock(k){
+  locks[k]=!locks[k];
+  var btn=el('lock_'+k);
+  if(btn){btn.textContent=locks[k]?'🔒':'🔓';btn.classList.toggle('locked',locks[k]);}
+}
+
+function onSlide(k,v){
+  updateBar(k,parseFloat(v));
+  updateDisplay(k,parseFloat(v));
+}
 
 function exportCSV(){
   if(!history.length){alert('请先运行优化！');return;}
-  const rows=[['迭代','Ca/Si','Al/Si','W/C','砂比','养护h','温度','强度MPa','渗透率mD','稠化min','失水mL','评分','成本','累计成本']];
-  history.forEach(r=>rows.push([r.iter,r.params.casi,r.params.alsi,r.params.wc,r.params.sand,r.params.cure,r.params.temp,r.perf.str,r.perf.perm,r.perf.thick,r.perf.fluid,r.scoreVal.toFixed(3),r.cost,r.cumCost.toFixed(0)]));
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(new Blob(['\ufeff'+rows.map(r=>r.join(',')).join('
-')],{type:'text/csv'}));
-  a.download=`cement_opt_${new Date().toISOString().slice(0,10)}.csv`;a.click();
+  var rows=[['迭代','Ca/Si','Al/Si','W/C','砂比','养护h','温度','强度MPa','渗透率mD','稠化min','失水mL','评分','成本','累计成本']];
+  for(var i=0;i<history.length;i++){
+    var r=history[i];
+    rows.push([r.iter,r.params.casi,r.params.alsi,r.params.wc,r.params.sand,r.params.cure,r.params.temp,r.perf.str,r.perf.perm,r.perf.thick,r.perf.fluid,r.scoreVal.toFixed(3),r.cost,r.cumCost.toFixed(0)]);
+  }
+  var csv='\ufeff'+rows.map(function(r){return r.join(',');}).join('\n');
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download='cement_opt_'+new Date().toISOString().slice(0,10)+'.csv';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
 }
 
-// ─── CHARTS INIT ─────────────────────────────────────
-window.addEventListener('load',()=>{
-  const C1=$('chartMain').getContext('2d');
-  mainChart=new Chart(C1,{type:'line',data:{labels:clabels,datasets:[{label:'当前评分',data:csCur,borderColor:'rgba(56,189,248,0.8)',backgroundColor:'rgba(56,189,248,0.06)',borderWidth:1.5,pointRadius:2,fill:true,tension:0.35},{label:'历史最优',data:csBest,borderColor:'rgba(74,222,128,0.9)',backgroundColor:'transparent',borderWidth:2,pointRadius:0,fill:false,tension:0.35}]},options:{responsive:true,maintainAspectRatio:false,animation:{duration:150},plugins:{legend:{labels:{color:'rgba(184,212,232,0.7)',font:{size:10,family:'JetBrains Mono'},boxWidth:20}}},scales:{x:{ticks:{color:'rgba(74,122,155,0.7)',font:{size:9}},grid:{color:'rgba(46,84,128,0.2)'},title:{display:true,text:'迭代',color:'rgba(74,122,155,0.5)',font:{size:9}}},y:{min:0,max:100,ticks:{color:'rgba(74,122,155,0.7)',font:{size:9}},grid:{color:'rgba(46,84,128,0.2)'},title:{display:true,text:'评分',color:'rgba(74,122,155,0.5)',font:{size:9}}}}}});
+// ── CHART INIT ─────────────────────────────────────────
+function initCharts(){
+  var c1=el('chartMain'), c2=el('chartRadar');
+  if(!c1||!c2){setTimeout(initCharts,100);return;}
+  if(typeof Chart==='undefined'){setTimeout(initCharts,100);return;}
+  try{
+    mainChart=new Chart(c1.getContext('2d'),{
+      type:'line',
+      data:{labels:clabels,datasets:[
+        {label:'当前评分',data:csCur,borderColor:'rgba(56,189,248,.8)',backgroundColor:'rgba(56,189,248,.06)',borderWidth:1.5,pointRadius:2,fill:true,tension:0.35},
+        {label:'历史最优',data:csBest,borderColor:'rgba(74,222,128,.9)',backgroundColor:'transparent',borderWidth:2,pointRadius:0,fill:false,tension:0.35}
+      ]},
+      options:{
+        responsive:true,maintainAspectRatio:false,animation:{duration:100},
+        plugins:{legend:{labels:{color:'rgba(184,212,232,.7)',font:{size:10},boxWidth:16}}},
+        scales:{
+          x:{ticks:{color:'rgba(74,122,155,.7)',font:{size:9}},grid:{color:'rgba(46,84,128,.18)'}},
+          y:{min:0,max:100,ticks:{color:'rgba(74,122,155,.7)',font:{size:9}},grid:{color:'rgba(46,84,128,.18)'}}
+        }
+      }
+    });
+    radarChart=new Chart(c2.getContext('2d'),{
+      type:'radar',
+      data:{labels:['强度','低渗','稠化','低失水','密度'],datasets:[
+        {data:[0,0,0,0,0],borderColor:'rgba(74,222,128,.8)',backgroundColor:'rgba(74,222,128,.1)',borderWidth:2,pointRadius:3,pointBackgroundColor:'rgba(74,222,128,.9)'}
+      ]},
+      options:{
+        responsive:true,maintainAspectRatio:false,animation:{duration:150},
+        plugins:{legend:{display:false}},
+        scales:{r:{min:0,max:100,ticks:{display:false},grid:{color:'rgba(46,84,128,.25)'},pointLabels:{color:'rgba(184,212,232,.7)',font:{size:9}}}}
+      }
+    });
+    // init bars
+    for(var i=0;i<PKEYS.length;i++){
+      var k=PKEYS[i], inp=el('p_'+k);
+      if(inp) updateBar(k,parseFloat(inp.value));
+    }
+    addLog('s','CementAI 就绪 · 选择算法并点击启动优化');
+  }catch(err){
+    console.error('Chart init error:',err);
+    setTimeout(initCharts,500);
+  }
+}
 
-  const C2=$('chartRadar').getContext('2d');
-  radarChart=new Chart(C2,{type:'radar',data:{labels:['强度','低渗','稠化','低失水','密度'],datasets:[{data:[0,0,0,0,0],borderColor:'rgba(74,222,128,0.8)',backgroundColor:'rgba(74,222,128,0.1)',borderWidth:2,pointRadius:3,pointBackgroundColor:'rgba(74,222,128,0.9)'}]},options:{responsive:true,maintainAspectRatio:false,animation:{duration:200},plugins:{legend:{display:false}},scales:{r:{min:0,max:100,ticks:{display:false},grid:{color:'rgba(46,84,128,0.3)'},pointLabels:{color:'rgba(184,212,232,0.7)',font:{size:10}}}}}});
-
-  ['casi','alsi','wc','sand','cure','temp'].forEach(k=>{$('p_'+k).addEventListener('input',e=>updateBar(k,+e.target.value));updateBar(k,+$('p_'+k).value);});
-  $('aiInp').addEventListener('input',function(){this.style.height='auto';this.style.height=Math.min(90,this.scrollHeight)+'px';});
+window.addEventListener('load',function(){
+  function wait(){
+    if(typeof Chart==='undefined'){setTimeout(wait,80);return;}
+    initCharts();
+  }
+  wait();
 });
 </script>
 </body>
