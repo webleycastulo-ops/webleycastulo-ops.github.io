@@ -257,6 +257,11 @@ footer {
 ::-webkit-scrollbar-track { background: var(--ink); }
 ::-webkit-scrollbar-thumb { background: var(--steel); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--wire); }
+
+.chart-card-hd{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.dl-btn{display:inline-flex;align-items:center;gap:4px;padding:4px 11px;border-radius:5px;border:1px solid rgba(56,189,248,.25);background:rgba(56,189,248,.04);color:#5b8ab5;font-size:11px;cursor:pointer;transition:all .15s;font-family:inherit;white-space:nowrap;flex-shrink:0}
+.dl-btn:hover{border-color:#38bdf8;color:#38bdf8;background:rgba(56,189,248,.1)}
+
 </style>
 <style>
 .analysis-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
@@ -351,7 +356,7 @@ table.data-table .lime { color: var(--lime); }
     <div class="import-desc">点击选择文件，或将 CSV 文件拖拽到此处<br>（从优化页面点击"导出CSV"获取文件）</div>
     <input type="file" id="csvFile" accept=".csv" style="display:none" onchange="loadCSV(this.files[0])">
   </div>
-  <div class="demo-btn-row" style="text-align:center;margin-top:10px">
+  <div style="text-align:center;margin-top:10px">
     <button onclick="loadDemo()" style="padding:7px 20px;border-radius:6px;border:1px solid var(--wire);background:transparent;color:var(--mist);cursor:pointer;font-size:12px;transition:all 0.15s" onmouseover="this.style.borderColor='var(--sky)';this.style.color='var(--sky)'" onmouseout="this.style.borderColor='var(--wire)';this.style.color='var(--mist)'">或使用演示数据体验分析功能</button>
   </div>
 
@@ -367,22 +372,22 @@ table.data-table .lime { color: var(--lime); }
   <div id="chartsArea" style="display:none">
     <div class="analysis-grid" style="margin-bottom:20px">
       <div class="chart-card">
-        <div class="chart-card-hd"><div><div class="chart-card-title">优化收敛曲线</div><div class="chart-card-sub">综合评分随迭代次数的变化</div></div><span class="badge badge-sky">ITER</span></div>
+        <div class="chart-card-hd"><div><div class="chart-card-title">优化收敛曲线</div><div class="chart-card-sub">综合评分随迭代次数的变化</div></div><span class="badge badge-sky">ITER</span><button class="dl-btn" onclick="dlChart('chartConv','收敛曲线')"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 3v13M7 11l5 5 5-5M4 20h16"/></svg>下载</button></div>
         <div class="chart-card-body"><canvas id="chartConv" height="220"></canvas></div>
       </div>
       <div class="chart-card">
-        <div class="chart-card-hd"><div><div class="chart-card-title">抗压强度分布</div><div class="chart-card-sub">每次实验的强度预测值</div></div><span class="badge badge-lime">MPa</span></div>
+        <div class="chart-card-hd"><div><div class="chart-card-title">抗压强度分布</div><div class="chart-card-sub">每次实验的强度预测值</div></div><span class="badge badge-lime">MPa</span><button class="dl-btn" onclick="dlChart('chartStr','强度分布')"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 3v13M7 11l5 5 5-5M4 20h16"/></svg>下载</button></div>
         <div class="chart-card-body"><canvas id="chartStr" height="220"></canvas></div>
       </div>
     </div>
 
     <div class="analysis-grid" style="margin-bottom:20px">
       <div class="chart-card">
-        <div class="chart-card-hd"><div><div class="chart-card-title">帕累托前沿</div><div class="chart-card-sub">强度最大化 vs 渗透率最小化</div></div><span class="badge badge-amber">PARETO</span></div>
+        <div class="chart-card-hd"><div><div class="chart-card-title">帕累托前沿</div><div class="chart-card-sub">强度最大化 vs 渗透率最小化</div></div><span class="badge badge-amber">PARETO</span><button class="dl-btn" onclick="dlChart('chartPareto','帕累托前沿')"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 3v13M7 11l5 5 5-5M4 20h16"/></svg>下载</button></div>
         <div class="chart-card-body"><canvas id="chartPareto" height="220"></canvas></div>
       </div>
       <div class="chart-card">
-        <div class="chart-card-hd"><div><div class="chart-card-title">成本-性能权衡</div><div class="chart-card-sub">累计实验成本与最优评分的关系</div></div><span class="badge badge-sky">COST</span></div>
+        <div class="chart-card-hd"><div><div class="chart-card-title">成本-性能权衡</div><div class="chart-card-sub">累计实验成本与最优评分的关系</div></div><span class="badge badge-sky">COST</span><button class="dl-btn" onclick="dlChart('chartCost','成本权衡')"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 3v13M7 11l5 5 5-5M4 20h16"/></svg>下载</button></div>
         <div class="chart-card-body"><canvas id="chartCost" height="220"></canvas></div>
       </div>
     </div>
@@ -419,413 +424,297 @@ table.data-table .lime { color: var(--lime); }
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <script>
-var data = [];
-var charts = {};
+let data = [];
+let charts = {};
 
-// ─── CSV column aliases ───────────────────────────────────
-// Map whatever column names come in -> canonical keys
-var COL_ITER   = ['迭代'];
-var COL_CASI   = ['Ca/Si', 'ca_si_ratio', 'Ca_Si'];
-var COL_ALSI   = ['Al/Si', 'al_si_ratio', 'Al_Si'];
-var COL_WC     = ['W/C', 'water_cement', 'WC'];
-var COL_SAND   = ['砂比', 'sand_ratio', '砂比%'];
-var COL_CURE   = ['养护(h)', 'curing_time', '养护h'];
-var COL_TEMP   = ['温度(°C)', 'temperature', '温度'];
-var COL_STR    = ['强度(MPa)', '强度MPa', 'strength'];
-var COL_PERM   = ['渗透率(mD)', '渗透率mD', 'permeability'];
-var COL_THICK  = ['稠化(min)', '稠化时间(min)', '稠化min'];
-var COL_FLUID  = ['失水(mL)', '失水量(mL)', '失水mL'];
-var COL_SCORE  = ['评分', '综合评分'];
-var COL_COST   = ['成本(元)', '本次成本(元)', '成本'];
-var COL_CUMCOST= ['累计成本(元)', '累积成本'];
-
-function findCol(headers, candidates) {
-  for (var i = 0; i < candidates.length; i++) {
-    if (headers.indexOf(candidates[i]) >= 0) return candidates[i];
-  }
-  return null;
-}
-
-var cols = {};
-
-function detectCols(headers) {
-  cols.iter    = findCol(headers, COL_ITER);
-  cols.casi    = findCol(headers, COL_CASI);
-  cols.alsi    = findCol(headers, COL_ALSI);
-  cols.wc      = findCol(headers, COL_WC);
-  cols.sand    = findCol(headers, COL_SAND);
-  cols.cure    = findCol(headers, COL_CURE);
-  cols.temp    = findCol(headers, COL_TEMP);
-  cols.str     = findCol(headers, COL_STR);
-  cols.perm    = findCol(headers, COL_PERM);
-  cols.thick   = findCol(headers, COL_THICK);
-  cols.fluid   = findCol(headers, COL_FLUID);
-  cols.score   = findCol(headers, COL_SCORE);
-  cols.cost    = findCol(headers, COL_COST);
-  cols.cumcost = findCol(headers, COL_CUMCOST);
-  console.log('Detected columns:', cols);
-}
-
-function g(row, key) {
-  if (!key) return 0;
-  var v = row[key];
-  return (v === undefined || v === '' || v === null) ? 0 : +v || 0;
-}
-
-// ─── drag & drop ─────────────────────────────────────────
 function handleDrop(e) {
   e.preventDefault();
-  var zone = document.getElementById('importZone');
-  if (zone) zone.classList.remove('drag');
-  var file = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
-  if (file) loadCSV(file);
+  document.getElementById('importZone').classList.remove('drag');
+  const file = e.dataTransfer.files[0];
+  if (file && file.name.endsWith('.csv')) loadCSV(file);
 }
 
-// ─── load CSV ────────────────────────────────────────────
 function loadCSV(file) {
-  if (!file) return;
-  var reader = new FileReader();
-  reader.onload = function(e) {
-    var text = e.target.result;
-    // Remove BOM
-    text = text.replace(/^\uFEFF/, '');
-    var lines = text.split('\n');
-    var rows = [];
-    for (var i = 0; i < lines.length; i++) {
-      if (lines[i].trim()) rows.push(lines[i]);
-    }
-    if (rows.length < 2) {
-      alert('CSV文件格式不正确或数据为空');
-      return;
-    }
-    var headers = rows[0].split(',').map(function(h) { return h.trim(); });
-    detectCols(headers);
-    data = [];
-    for (var ri = 1; ri < rows.length; ri++) {
-      var vals = rows[ri].split(',');
-      var obj = {};
-      for (var hi = 0; hi < headers.length; hi++) {
-        var raw = vals[hi] !== undefined ? vals[hi].trim() : '';
-        obj[headers[hi]] = isNaN(raw) || raw === '' ? raw : +raw;
-      }
-      if (!isNaN(g(obj, cols.iter)) && g(obj, cols.iter) > 0) {
-        data.push(obj);
-      }
-    }
-    if (data.length === 0) {
-      alert('未能解析到有效数据行，请检查CSV格式');
-      return;
-    }
+  const reader = new FileReader();
+  reader.onload = e => {
+    const rows = e.target.result.split('\n').filter(r => r.trim());
+    const headers = rows[0].split(',').map(h => h.trim().replace(/^\uFEFF/, ''));
+    data = rows.slice(1).map(row => {
+      const vals = row.split(',');
+      const obj = {};
+      headers.forEach((h, i) => { obj[h] = isNaN(vals[i]) ? vals[i] : +vals[i]; });
+      return obj;
+    }).filter(r => !isNaN(r['迭代']));
     renderAll();
   };
-  reader.onerror = function() { alert('文件读取失败，请重试'); };
   reader.readAsText(file, 'utf-8');
 }
 
-// ─── demo data ────────────────────────────────────────────
 function loadDemo() {
-  var demoHeaders = ['迭代','Ca/Si','Al/Si','W/C','砂比','养护(h)','温度(°C)','强度(MPa)','渗透率(mD)','稠化(min)','失水(mL)','评分','成本(元)','累计成本(元)'];
-  detectCols(demoHeaders);
+  // Seeded PRNG (mulberry32) - identical output every time, no Math.random()
+  var _s = 20250314;
+  function rand() {
+    _s |= 0; _s = _s + 0x6D2B79F5 | 0;
+    var t = Math.imul(_s ^ _s >>> 15, 1 | _s);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  }
+  function rn(scale) { return (rand() - 0.5) * 2 * scale; }
+
+  // Physics model matching the optimizer
+  function predict(casi, alsi, wc, sand, cure, temp) {
+    var tb = temp < 80 ? 0.04*(temp-60) : temp < 250 ? 0.09*(temp-80)*0.9 : -0.015*(temp-250);
+    var str = Math.max(8, 45
+      + (-18*Math.pow(casi-1.2,2)+11)
+      + (alsi>0.15 ? -10*(alsi-0.15) : 6*alsi)
+      + (-52*(wc-0.38)-22*Math.pow(wc-0.38,2))
+      + (-0.004*Math.pow(sand-30,2)+2.5)
+      + tb + 6.5*Math.log(1+cure/24)
+      + rn(5));
+    var perm = Math.max(0.001, 0.05 + 0.75*Math.exp(8*(wc-0.38))
+      - 0.018/(Math.abs(casi-1.1)+0.1) + 0.001*sand
+      + (temp>200 ? 0.007*(temp-200) : 0) + rn(0.03));
+    var thick = Math.max(30, 180+35*(wc-0.44)-0.4*(temp-150)-40*alsi-0.2*cure + rn(22));
+    var fluid = Math.max(5,  120+50*(wc-0.38)-0.25*sand-25*alsi + rn(16));
+    return {
+      str:   +str.toFixed(2),
+      perm:  +perm.toFixed(4),
+      thick: +thick.toFixed(1),
+      fluid: +fluid.toFixed(1)
+    };
+  }
+  function calcScore(p) {
+    var s  = Math.min(1, p.str/80);
+    var pm = Math.max(0, 1-p.perm/0.5);
+    var t  = Math.max(0, 1-Math.abs(p.thick-150)/150);
+    var f  = Math.max(0, 1-p.fluid/150);
+    return +((0.5*s+0.25*pm+0.15*t+0.1*f)*100).toFixed(3);
+  }
+
+  // Hand-crafted BO trajectory: early exploration -> exploitation -> fine-tuning
+  // Realistic: W/C drops, Ca/Si rises toward optimum, score non-monotone
+  var sched = [
+    [0.82,0.06,0.52,20,14, 95],
+    [1.55,0.18,0.45,55,36,160],
+    [0.65,0.03,0.60,10,24,130],
+    [1.10,0.22,0.41,40,72,220],
+    [0.92,0.08,0.48,25,18, 80],
+    [1.35,0.14,0.43,32,48,175],
+    [1.18,0.10,0.44,28,42,180],
+    [1.42,0.09,0.40,35,60,195],
+    [1.20,0.11,0.46,22,30,155],
+    [1.28,0.13,0.41,33,55,200],
+    [1.15,0.07,0.42,38,66,185],
+    [1.31,0.12,0.39,31,62,198],
+    [1.38,0.15,0.40,29,58,192],
+    [1.22,0.11,0.41,34,70,205],
+    [1.26,0.13,0.38,30,65,200],
+    [1.30,0.12,0.39,32,68,202],
+    [1.24,0.11,0.38,31,72,205],
+    [1.27,0.12,0.39,30,70,200],
+    [1.25,0.12,0.38,31,71,203],
+    [1.29,0.13,0.38,30,68,198],
+    [1.26,0.11,0.38,32,72,205],
+    [1.25,0.12,0.38,30,72,205],
+    [1.24,0.12,0.38,31,71,204],
+    [1.25,0.12,0.38,30,72,205],
+    [1.26,0.12,0.38,30,72,206]
+  ];
+
   data = [];
   var cumCost = 0;
-  for (var i = 1; i <= 25; i++) {
-    var t = i / 25;
-    var rng = function() { return (Math.random() - 0.5) * 0.06; };
-    var casi  = +(0.6 + t * 0.7 + rng() * 0.3).toFixed(2);
-    var alsi  = +(0.05 + t * 0.12 + rng() * 0.05).toFixed(3);
-    var wc    = +(0.50 - t * 0.12 + rng() * 0.05).toFixed(2);
-    var sand  = +(20 + t * 20 + rng() * 10).toFixed(0);
-    var cure  = +(12 + t * 48 + rng() * 10).toFixed(0);
-    var temp  = +(100 + t * 150 + rng() * 20).toFixed(0);
-    var str   = +(35 + t * 40 + rng() * 8).toFixed(2);
-    var perm  = +(0.3 - t * 0.25 + Math.abs(rng()) * 0.05).toFixed(4);
-    var thick = +(220 - t * 70 + rng() * 20).toFixed(1);
-    var fluid = +(120 - t * 60 + rng() * 15).toFixed(1);
-    var score = +(40 + t * 50 + rng() * 5).toFixed(3);
-    var cost  = +(120 + Math.random() * 80).toFixed(1);
-    cumCost += +cost;
-    var row = {};
-    row['迭代']       = i;
-    row['Ca/Si']      = casi;
-    row['Al/Si']      = alsi;
-    row['W/C']        = wc;
-    row['砂比']       = sand;
-    row['养护(h)']    = cure;
-    row['温度(°C)']   = temp;
-    row['强度(MPa)']  = str;
-    row['渗透率(mD)'] = perm;
-    row['稠化(min)']  = thick;
-    row['失水(mL)']   = fluid;
-    row['评分']       = score;
-    row['成本(元)']   = cost;
-    row['累计成本(元)'] = +cumCost.toFixed(0);
-    data.push(row);
+
+  for (var i = 0; i < 25; i++) {
+    var b = sched[i];
+    var casi = +Math.max(0.3, Math.min(2.0, b[0]+rn(0.07))).toFixed(2);
+    var alsi = +Math.max(0,   Math.min(0.5, b[1]+rn(0.015))).toFixed(3);
+    var wc   = +Math.max(0.3, Math.min(0.7, b[2]+rn(0.018))).toFixed(2);
+    var sand = Math.round(Math.max(0, Math.min(80, b[3]+rn(5))));
+    var cure = Math.round(Math.max(1, Math.min(168, b[4]+rn(7))));
+    var temp = Math.round(Math.max(20, Math.min(350, b[5]+rn(12))));
+
+    var perf  = predict(casi, alsi, wc, sand, cure, temp);
+    var score = calcScore(perf);
+    var cost  = +(110 + rn(35) + alsi*100 + (temp-20)/330*35).toFixed(1);
+    cumCost   = +(cumCost + +cost).toFixed(0);
+
+    // Column names MUST match what renderCorr / renderTable / renderCharts expect
+    data.push({
+      '\u8fed\u4ee3': i+1,
+      'ca_si_ratio':   casi,
+      'al_si_ratio':   alsi,
+      'water_cement':  wc,
+      'sand_ratio':    sand,
+      'curing_time':   cure,
+      'temperature':   temp,
+      '\u5f3a\u5ea6(MPa)':  perf.str,
+      '\u6e17\u900f\u7387(mD)': perf.perm,
+      '\u7a20\u5316\u65f6\u95f4(min)': perf.thick,
+      '\u5931\u6c34\u91cf(mL)': perf.fluid,
+      '\u7efc\u5408\u8bc4\u5206': score,
+      '\u672c\u6b21\u6210\u672c(\u5143)': +cost,
+      '\u7d2f\u8ba1\u6210\u672c(\u5143)': +cumCost
+    });
   }
   renderAll();
 }
 
-// ─── spearman ────────────────────────────────────────────
 function spearman(x, y) {
-  var n = x.length;
-  if (n < 3) return 0;
-  function rank(arr) {
-    var s = arr.map(function(v, i) { return { v: v, i: i }; }).sort(function(a, b) { return a.v - b.v; });
-    var r = new Array(n);
-    for (var i = 0; i < n; i++) r[s[i].i] = i + 1;
-    return r;
-  }
-  var rx = rank(x), ry = rank(y);
-  var d2 = 0;
-  for (var i = 0; i < n; i++) d2 += Math.pow(rx[i] - ry[i], 2);
-  return 1 - 6 * d2 / (n * (n * n - 1));
+  const n = x.length;
+  const rank = arr => { const s = [...arr].map((v,i) => ({v,i})).sort((a,b) => a.v-b.v); const r = new Array(n); s.forEach((e,i) => r[e.i] = i+1); return r; };
+  const rx = rank(x), ry = rank(y);
+  const d2 = rx.reduce((s,v,i) => s + (v-ry[i])**2, 0);
+  return 1 - 6*d2/(n*(n*n-1));
 }
 
-// ─── renderAll ───────────────────────────────────────────
 function renderAll() {
-  var sg = document.getElementById('statGrid');
-  var ca = document.getElementById('chartsArea');
-  var iz = document.getElementById('importZone');
-  var db = document.querySelector('.demo-btn-row');
-  if (sg) sg.style.display = 'grid';
-  if (ca) ca.style.display = 'block';
-  if (iz) iz.style.display = 'none';
-  if (db) db.style.display = 'none';
+  document.getElementById('statGrid').style.display = 'grid';
+  document.getElementById('chartsArea').style.display = 'block';
+  document.getElementById('importZone').style.display = 'none';
 
-  var scores   = data.map(function(r) { return g(r, cols.score); });
-  var strs     = data.map(function(r) { return g(r, cols.str); });
-  var cumcosts = data.map(function(r) { return g(r, cols.cumcost); });
+  const bestScore = Math.max(...data.map(r => r['综合评分'] || 0));
+  const bestStr = Math.max(...data.map(r => r['强度(MPa)'] || 0));
+  const totalCost = data[data.length-1]?.['累计成本(元)'] || 0;
 
-  var bestScore = Math.max.apply(null, scores);
-  var bestStr   = Math.max.apply(null, strs);
-  var totalCost = cumcosts[cumcosts.length - 1] || 0;
+  document.getElementById('st_total').textContent = data.length;
+  document.getElementById('st_str').textContent = bestStr.toFixed(1);
+  document.getElementById('st_score').textContent = bestScore.toFixed(1);
+  document.getElementById('st_cost').textContent = totalCost.toFixed(0);
 
-  var el;
-  el = document.getElementById('st_total'); if (el) el.textContent = data.length;
-  el = document.getElementById('st_str');   if (el) el.textContent = bestStr.toFixed(1);
-  el = document.getElementById('st_score'); if (el) el.textContent = bestScore.toFixed(1);
-  el = document.getElementById('st_cost');  if (el) el.textContent = totalCost.toFixed(0);
-
-  loadChartJSIfNeeded(function() {
-    renderConvChart();
-    renderStrChart();
-    renderParetoChart();
-    renderCostChart();
-    renderCorr();
-    renderTable();
-  });
+  renderConvChart();
+  renderStrChart();
+  renderParetoChart();
+  renderCostChart();
+  renderCorr();
+  renderTable();
 }
 
-// ─── chart.js lazy load ──────────────────────────────────
-var chartJSReady = false;
-var chartJSCallbacks = [];
-function loadChartJSIfNeeded(cb) {
-  if (typeof Chart !== 'undefined') { cb(); return; }
-  chartJSCallbacks.push(cb);
-  if (chartJSCallbacks.length > 1) return; // already loading
-  var cdns = [
-    'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js',
-    'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js',
-    'https://unpkg.com/chart.js@4.4.0/dist/chart.umd.min.js'
-  ];
-  var idx = 0;
-  function tryNext() {
-    if (idx >= cdns.length) { alert('Chart.js加载失败，请检查网络连接'); return; }
-    var s = document.createElement('script');
-    s.src = cdns[idx++];
-    s.onload = function() {
-      for (var i = 0; i < chartJSCallbacks.length; i++) chartJSCallbacks[i]();
-      chartJSCallbacks = [];
-    };
-    s.onerror = tryNext;
-    document.head.appendChild(s);
-  }
-  tryNext();
-}
+const chartColors = { bg: 'rgba(9,17,28,0)', grid: 'rgba(46,84,128,0.2)', text: 'rgba(91,138,181,0.8)', font: { size: 10, family: 'JetBrains Mono' } };
 
-// ─── chart helpers ───────────────────────────────────────
-var CC = { grid: 'rgba(46,84,128,.2)', text: 'rgba(91,138,181,.8)', font: { size: 10, family: 'JetBrains Mono' } };
-
-function makeChart(id, type, chartData, extraOpts) {
-  if (charts[id]) { charts[id].destroy(); delete charts[id]; }
-  var el = document.getElementById(id);
-  if (!el) return;
-  var opts = {
-    responsive: true,
-    maintainAspectRatio: false,
-    animation: { duration: 600 },
-    plugins: { legend: { labels: { color: 'rgba(184,212,232,.7)', font: { size: 10, family: 'JetBrains Mono' }, boxWidth: 18 } } },
-    scales: {
-      x: { ticks: { color: CC.text, font: CC.font }, grid: { color: CC.grid } },
-      y: { ticks: { color: CC.text, font: CC.font }, grid: { color: CC.grid } }
-    }
-  };
-  if (extraOpts && extraOpts.scales) {
-    if (extraOpts.scales.x) {
-      for (var k in extraOpts.scales.x) opts.scales.x[k] = extraOpts.scales.x[k];
-    }
-    if (extraOpts.scales.y) {
-      for (var k in extraOpts.scales.y) opts.scales.y[k] = extraOpts.scales.y[k];
-    }
-  }
-  charts[id] = new Chart(el.getContext('2d'), { type: type, data: chartData, options: opts });
+function makeChart(id, type, data, opts) {
+  if (charts[id]) charts[id].destroy();
+  const ctx = document.getElementById(id).getContext('2d');
+  charts[id] = new Chart(ctx, { type, data, options: { responsive: true, maintainAspectRatio: false, animation: { duration: 600 }, plugins: { legend: { labels: { color: 'rgba(184,212,232,0.7)', font: { size: 10, family: 'JetBrains Mono' }, boxWidth: 18 } } }, scales: { x: { ticks: { color: chartColors.text, font: chartColors.font }, grid: { color: chartColors.grid } }, y: { ticks: { color: chartColors.text, font: chartColors.font }, grid: { color: chartColors.grid } } }, ...opts } });
+  return charts[id];
 }
 
 function renderConvChart() {
-  var iters  = data.map(function(r) { return g(r, cols.iter); });
-  var scores = data.map(function(r) { return g(r, cols.score); });
-  var best = [];
-  for (var i = 0; i < scores.length; i++) best.push(i === 0 ? scores[i] : Math.max(scores[i], best[i-1]));
+  const iters = data.map(r => r['迭代']);
+  const scores = data.map(r => r['综合评分'] || 0);
+  const bestSoFar = scores.reduce((acc, v) => { acc.push(Math.max(v, acc.length ? acc[acc.length-1] : 0)); return acc; }, []);
   makeChart('chartConv', 'line', {
     labels: iters,
     datasets: [
-      { label: '当前评分', data: scores, borderColor: 'rgba(56,189,248,.8)', backgroundColor: 'rgba(56,189,248,.06)', borderWidth: 1.5, pointRadius: 2, fill: true, tension: 0.35 },
-      { label: '历史最优', data: best, borderColor: 'rgba(74,222,128,.9)', borderWidth: 2, pointRadius: 0, fill: false, tension: 0.35 }
+      { label: '当前评分', data: scores, borderColor: 'rgba(56,189,248,0.8)', backgroundColor: 'rgba(56,189,248,0.06)', borderWidth: 1.5, pointRadius: 2, fill: true, tension: 0.35 },
+      { label: '历史最优', data: bestSoFar, borderColor: 'rgba(74,222,128,0.9)', borderWidth: 2, pointRadius: 0, tension: 0.35, fill: false }
     ]
-  }, { scales: { y: { min: 0, max: 100 } } });
+  }, { scales: { x: { title: { display: true, text: '迭代次数', color: 'rgba(91,138,181,0.6)', font: { size: 9 } }, ticks: { color: chartColors.text, font: chartColors.font }, grid: { color: chartColors.grid } }, y: { min: 0, max: 100, title: { display: true, text: '综合评分', color: 'rgba(91,138,181,0.6)', font: { size: 9 } }, ticks: { color: chartColors.text, font: chartColors.font }, grid: { color: chartColors.grid } } } });
 }
 
 function renderStrChart() {
-  var bestScore = Math.max.apply(null, data.map(function(r) { return g(r, cols.score); }));
   makeChart('chartStr', 'bar', {
-    labels: data.map(function(r) { return '#' + g(r, cols.iter); }),
-    datasets: [{
-      label: '抗压强度 (MPa)',
-      data: data.map(function(r) { return g(r, cols.str); }),
-      backgroundColor: data.map(function(r) { return g(r, cols.score) === bestScore ? 'rgba(74,222,128,.7)' : 'rgba(56,189,248,.4)'; }),
-      borderRadius: 3
-    }]
-  }, {});
+    labels: data.map(r => '#' + r['迭代']),
+    datasets: [{ label: '抗压强度 (MPa)', data: data.map(r => r['强度(MPa)'] || 0), backgroundColor: data.map(r => r['综合评分'] === Math.max(...data.map(d => d['综合评分'])) ? 'rgba(74,222,128,0.7)' : 'rgba(56,189,248,0.4)'), borderRadius: 3 }]
+  }, { scales: { x: { ticks: { color: chartColors.text, font: { size: 8, family: 'JetBrains Mono' }, maxTicksLimit: 15 }, grid: { color: chartColors.grid } }, y: { title: { display: true, text: 'MPa', color: 'rgba(91,138,181,0.6)', font: { size: 9 } }, ticks: { color: chartColors.text, font: chartColors.font }, grid: { color: chartColors.grid } } } });
 }
 
 function renderParetoChart() {
-  var pts = data.map(function(r) { return { x: g(r, cols.str), y: g(r, cols.perm), score: g(r, cols.score) }; });
-  var pareto = pts.filter(function(p) {
-    return !pts.some(function(q) { return q.x >= p.x && q.y <= p.y && (q.x > p.x || q.y < p.y); });
-  }).sort(function(a, b) { return a.x - b.x; });
-  if (charts['chartPareto']) { charts['chartPareto'].destroy(); delete charts['chartPareto']; }
-  var el = document.getElementById('chartPareto');
-  if (!el) return;
-  charts['chartPareto'] = new Chart(el.getContext('2d'), {
-    type: 'scatter',
-    data: { datasets: [
-      { label: '所有实验点', data: pts, backgroundColor: pts.map(function(p) { return 'rgba(56,189,248,' + (0.2 + p.score / 100 * 0.5) + ')'; }), pointRadius: 5 },
-      { label: '帕累托前沿', data: pareto, backgroundColor: 'rgba(74,222,128,.8)', borderColor: 'rgba(74,222,128,.5)', showLine: true, pointRadius: 6, borderWidth: 1.5, tension: 0.2 }
-    ]},
-    options: {
-      responsive: true, maintainAspectRatio: false, animation: { duration: 600 },
-      plugins: { legend: { labels: { color: 'rgba(184,212,232,.7)', font: { size: 10, family: 'JetBrains Mono' }, boxWidth: 18 } } },
-      scales: {
-        x: { title: { display: true, text: '抗压强度 (MPa) ↑', color: 'rgba(91,138,181,.6)', font: { size: 9 } }, ticks: { color: CC.text, font: CC.font }, grid: { color: CC.grid } },
-        y: { title: { display: true, text: '渗透率 (mD) ↓', color: 'rgba(91,138,181,.6)', font: { size: 9 } }, ticks: { color: CC.text, font: CC.font }, grid: { color: CC.grid } }
-      }
-    }
-  });
+  const pts = data.map(r => ({ x: r['强度(MPa)'] || 0, y: r['渗透率(mD)'] || 0, score: r['综合评分'] || 0 }));
+  // Find pareto front
+  const pareto = pts.filter(p => !pts.some(q => q.x >= p.x && q.y <= p.y && (q.x > p.x || q.y < p.y))).sort((a, b) => a.x - b.x);
+  makeChart('chartPareto', 'scatter', {
+    datasets: [
+      { label: '所有实验点', data: pts, backgroundColor: pts.map(p => `rgba(56,189,248,${0.2 + p.score/100*0.5})`), pointRadius: 5 },
+      { label: '帕累托前沿', data: pareto, backgroundColor: 'rgba(74,222,128,0.8)', borderColor: 'rgba(74,222,128,0.5)', showLine: true, pointRadius: 6, borderWidth: 1.5, tension: 0.2 }
+    ]
+  }, { scales: { x: { title: { display: true, text: '抗压强度 (MPa) ↑', color: 'rgba(91,138,181,0.6)', font: { size: 9 } }, ticks: { color: chartColors.text, font: chartColors.font }, grid: { color: chartColors.grid } }, y: { title: { display: true, text: '渗透率 (mD) ↓', color: 'rgba(91,138,181,0.6)', font: { size: 9 } }, ticks: { color: chartColors.text, font: chartColors.font }, grid: { color: chartColors.grid } } } });
 }
 
 function renderCostChart() {
-  var costs = data.map(function(r) { return g(r, cols.cumcost); });
-  var best = [];
-  for (var i = 0; i < data.length; i++) {
-    var s = g(data[i], cols.score);
-    best.push(i === 0 ? s : Math.max(s, best[i-1]));
-  }
-  if (charts['chartCost']) { charts['chartCost'].destroy(); delete charts['chartCost']; }
-  var el = document.getElementById('chartCost');
-  if (!el) return;
-  charts['chartCost'] = new Chart(el.getContext('2d'), {
-    type: 'scatter',
-    data: { datasets: [{
-      label: '成本-最优评分',
-      data: costs.map(function(c, i) { return { x: c, y: best[i] }; }),
-      backgroundColor: costs.map(function(_, i) { return 'rgba(167,139,250,' + (0.3 + i / costs.length * 0.5) + ')'; }),
-      showLine: true, borderColor: 'rgba(167,139,250,.4)', pointRadius: 4, tension: 0.3
-    }]},
-    options: {
-      responsive: true, maintainAspectRatio: false, animation: { duration: 600 },
-      plugins: { legend: { labels: { color: 'rgba(184,212,232,.7)', font: { size: 10, family: 'JetBrains Mono' }, boxWidth: 18 } } },
-      scales: {
-        x: { title: { display: true, text: '累计成本 (元)', color: 'rgba(91,138,181,.6)', font: { size: 9 } }, ticks: { color: CC.text, font: CC.font }, grid: { color: CC.grid } },
-        y: { min: 0, max: 100, ticks: { color: CC.text, font: CC.font }, grid: { color: CC.grid } }
-      }
-    }
-  });
+  const costs = data.map(r => r['累计成本(元)'] || 0);
+  const bestSoFar = data.reduce((acc, r) => { const s = r['综合评分'] || 0; acc.push(Math.max(s, acc.length ? acc[acc.length-1] : 0)); return acc; }, []);
+  makeChart('chartCost', 'scatter', {
+    datasets: [{ label: '成本-最优评分', data: costs.map((c, i) => ({ x: c, y: bestSoFar[i] })), backgroundColor: costs.map((_, i) => `rgba(167,139,250,${0.3 + i/costs.length*0.5})`), showLine: true, borderColor: 'rgba(167,139,250,0.4)', pointRadius: 4, tension: 0.3 }]
+  }, { scales: { x: { title: { display: true, text: '累计成本 (元)', color: 'rgba(91,138,181,0.6)', font: { size: 9 } }, ticks: { color: chartColors.text, font: chartColors.font }, grid: { color: chartColors.grid } }, y: { min: 0, max: 100, title: { display: true, text: '历史最优评分', color: 'rgba(91,138,181,0.6)', font: { size: 9 } }, ticks: { color: chartColors.text, font: chartColors.font }, grid: { color: chartColors.grid } } } });
 }
 
 function renderCorr() {
-  var strArr = data.map(function(r) { return g(r, cols.str); });
-  var params = [
-    { col: cols.casi, label: 'Ca/Si' },
-    { col: cols.alsi, label: 'Al/Si' },
-    { col: cols.wc,   label: 'W/C' },
-    { col: cols.sand, label: '砂比' },
-    { col: cols.cure, label: '养护时间' },
-    { col: cols.temp, label: '养护温度' }
+  const strArr = data.map(r => r['强度(MPa)'] || 0);
+  const paramMap = [
+    { key: 'ca_si_ratio', label: 'Ca/Si' }, { key: 'al_si_ratio', label: 'Al/Si' },
+    { key: 'water_cement', label: 'W/C' }, { key: 'sand_ratio', label: '砂比' },
+    { key: 'curing_time', label: '养护时间' }, { key: 'temperature', label: '养护温度' }
   ];
-  var html = '';
-  for (var i = 0; i < params.length; i++) {
-    var p = params[i];
-    if (!p.col) continue;
-    var vals = data.map(function(r) { return g(r, p.col); });
-    var corr = spearman(vals, strArr);
-    var pct = (Math.abs(corr) * 50).toFixed(1);
-    var isPos = corr >= 0;
-    html += '<div class="param-corr-row">' +
-      '<span class="pcr-lbl">' + p.label + '</span>' +
-      '<div class="pcr-track"><div class="pcr-midline"></div>' +
-      '<div class="pcr-fill ' + (isPos ? 'pos' : 'neg') + '" style="width:' + pct + '%"></div></div>' +
-      '<span class="pcr-val' + (isPos ? '' : ' neg') + '">' + (corr >= 0 ? '+' : '') + corr.toFixed(3) + '</span>' +
-      '</div>';
-  }
-  var cb = document.getElementById('corrBody');
-  if (cb) cb.innerHTML = html;
+  const html = paramMap.map(p => {
+    const vals = data.map(r => r[p.key] || 0);
+    const corr = spearman(vals, strArr);
+    const pct = Math.abs(corr) * 50;
+    const isPos = corr >= 0;
+    return `<div class="param-corr-row">
+      <span class="pcr-lbl">${p.label}</span>
+      <div class="pcr-track">
+        <div class="pcr-midline"></div>
+        <div class="pcr-fill ${isPos ? 'pos' : 'neg'}" style="width:${pct}%"></div>
+      </div>
+      <span class="pcr-val${isPos ? '' : ' neg'}">${corr >= 0 ? '+' : ''}${corr.toFixed(3)}</span>
+    </div>`;
+  }).join('');
+  document.getElementById('corrBody').innerHTML = html;
 }
 
 function renderTable() {
-  var bestScore = Math.max.apply(null, data.map(function(r) { return g(r, cols.score); }));
-  var sub = document.getElementById('tableSubtitle');
-  if (sub) sub.textContent = data.length + ' 条实验记录';
-  var tbody = document.getElementById('tableBody');
-  if (!tbody) return;
-  var html = '';
-  for (var i = 0; i < data.length; i++) {
-    var r = data[i];
-    var isBest = g(r, cols.score) === bestScore;
-    html += '<tr' + (isBest ? ' class="best-row"' : '') + '>' +
-      '<td class="mono">#' + g(r, cols.iter) + '</td>' +
-      '<td class="mono">' + (r[cols.casi] || '--') + '</td>' +
-      '<td class="mono">' + (r[cols.alsi] || '--') + '</td>' +
-      '<td class="mono">' + (r[cols.wc]   || '--') + '</td>' +
-      '<td class="mono">' + (r[cols.sand] || '--') + '</td>' +
-      '<td class="mono">' + (r[cols.cure] || '--') + '</td>' +
-      '<td class="mono">' + (r[cols.temp] || '--') + '</td>' +
-      '<td class="mono lime">' + (r[cols.str]  || '--') + '</td>' +
-      '<td class="mono">' + (r[cols.perm] || '--') + '</td>' +
-      '<td class="mono">' + (r[cols.thick]|| '--') + '</td>' +
-      '<td class="mono lime">' + (r[cols.score]|| '--') + '</td>' +
-      '<td class="mono" style="color:#5b8ab5">' + (r[cols.cost] || '--') + '</td>' +
-      '</tr>';
-  }
-  tbody.innerHTML = html;
+  const bestScore = Math.max(...data.map(r => r['综合评分'] || 0));
+  document.getElementById('tableSubtitle').textContent = data.length + ' 条实验记录';
+  const tbody = document.getElementById('tableBody');
+  tbody.innerHTML = data.map(r => `
+    <tr class="${r['综合评分'] === bestScore ? 'best-row' : ''}">
+      <td class="mono">#${r['迭代']}</td>
+      <td class="mono">${(r['ca_si_ratio'] || '--')}</td>
+      <td class="mono">${(r['al_si_ratio'] || '--')}</td>
+      <td class="mono">${(r['water_cement'] || '--')}</td>
+      <td class="mono">${(r['sand_ratio'] || '--')}</td>
+      <td class="mono">${(r['curing_time'] || '--')}</td>
+      <td class="mono">${(r['temperature'] || '--')}</td>
+      <td class="mono lime">${(r['强度(MPa)'] || '--')}</td>
+      <td class="mono">${(r['渗透率(mD)'] || '--')}</td>
+      <td class="mono">${(r['稠化时间(min)'] || '--')}</td>
+      <td class="mono lime">${(r['综合评分'] || '--')}</td>
+      <td class="mono" style="color:var(--mist)">${(r['本次成本(元)'] || '--')}</td>
+    </tr>
+  `).join('');
 }
 
 function exportFiltered() {
   if (!data.length) return;
-  var keys = Object.keys(data[0]);
-  var lines = [keys.join(',')];
-  for (var i = 0; i < data.length; i++) {
-    lines.push(keys.map(function(k) { return data[i][k]; }).join(','));
-  }
-  var a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob(['\uFEFF' + lines.join('\n')], { type: 'text/csv' }));
+  const keys = Object.keys(data[0]);
+  const csv = [keys.join(','), ...data.map(r => keys.map(k => r[k]).join(','))].join('\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob(['\ufeff' + csv], { type: 'text/csv' }));
   a.download = 'cement_analysis_export.csv';
   a.click();
 }
 
-window.handleDrop = handleDrop;
-window.loadCSV = loadCSV;
-window.loadDemo = loadDemo;
+function dlChart(canvasId, label) {
+  var canvas = document.getElementById(canvasId);
+  if (!canvas) { alert('图表尚未生成，请先导入数据'); return; }
+  var w = canvas.width, h = canvas.height;
+  if (!w || !h) { alert('请等图表渲染完成后再下载'); return; }
+  var off = document.createElement('canvas');
+  off.width = w; off.height = h;
+  var ctx = off.getContext('2d');
+  ctx.fillStyle = '#0d1b2a';
+  ctx.fillRect(0, 0, w, h);
+  ctx.drawImage(canvas, 0, 0);
+  var a = document.createElement('a');
+  a.download = 'CementAI_' + label + '_' + new Date().toISOString().slice(0,10) + '.png';
+  a.href = off.toDataURL('image/png');
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+}
+window.dlChart        = dlChart;
+window.loadCSV        = loadCSV;
+window.loadDemo       = loadDemo;
+window.handleDrop     = handleDrop;
 window.exportFiltered = exportFiltered;
-
 </script>
 </body>
 </html>
