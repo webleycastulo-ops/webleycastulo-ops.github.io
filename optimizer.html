@@ -348,6 +348,26 @@ canvas { width: 100% !important; }
 ::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--steel); border-radius: 2px; }
+
+.key-overlay{position:fixed;inset:0;z-index:600;background:rgba(0,0,0,.75);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:20px}
+.key-modal{background:#101e2e;border:1px solid rgba(56,189,248,.4);border-radius:14px;padding:28px;width:100%;max-width:420px;position:relative;box-shadow:0 24px 60px rgba(0,0,0,.7)}
+.key-modal-t{font-family:'Syne',sans-serif;font-size:1.1rem;font-weight:800;color:#f0f8ff;margin-bottom:6px}
+.key-modal-d{font-size:12.5px;color:#5b8ab5;line-height:1.75;margin-bottom:10px}
+.key-steps{margin:0 0 14px;padding-left:18px}
+.key-steps li{font-size:12px;color:#5b8ab5;margin-bottom:4px;line-height:1.6}
+.key-steps li a{color:#38bdf8;text-decoration:underline}
+.key-row{display:flex;gap:8px;margin-bottom:8px}
+.key-inp{flex:1;background:#09111c;border:1px solid #1e3a58;border-radius:7px;padding:10px 12px;font-family:'JetBrains Mono',monospace;font-size:12px;color:#4ade80;outline:none;transition:border-color .18s}
+.key-inp:focus{border-color:#38bdf8}
+.key-inp::placeholder{color:#2e5480}
+.key-save{padding:10px 20px;border-radius:7px;background:linear-gradient(135deg,#0ea5e9,#16a34a);border:none;color:#fff;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:'Noto Sans SC',sans-serif}
+.key-save:hover{opacity:.85}
+.key-close{position:absolute;top:12px;right:14px;background:none;border:none;color:#5b8ab5;font-size:20px;cursor:pointer;padding:2px 6px;border-radius:4px}
+.key-close:hover{color:#f0f8ff;background:rgba(255,255,255,.08)}
+.key-hint{font-size:11px;color:#2e5480}
+.ai-key-btn{padding:4px 9px;border-radius:5px;border:1px solid rgba(46,84,128,.4);background:transparent;color:#5b8ab5;font-size:11px;cursor:pointer;transition:all .15s;font-family:inherit;flex-shrink:0}
+.ai-key-btn:hover{border-color:#38bdf8;color:#38bdf8}
+
 </style>
 </head>
 <body>
@@ -602,7 +622,7 @@ canvas { width: 100% !important; }
     <div class="ai-bar">
       <textarea class="ai-input" id="aiInput" placeholder="问AI：当前最优配方为什么强度高？如何进一步提升？请分析参数敏感性..." rows="1"
         onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendAIChat()}"></textarea>
-      <button class="ai-send" id="aiSendBtn" onclick="sendAIChat()" title="发送 (Enter)">↑</button>
+      <button class="ai-key-btn" onclick="showKeyModal()" title="配置API Key">&#x2699; Key</button><button class="ai-send" id="aiSendBtn" onclick="sendAIChat()" title="发送 (Enter)">↑</button>
     </div>
   </div>
 
@@ -656,6 +676,7 @@ canvas { width: 100% !important; }
 <!-- Chart.js -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <script>
+
 'use strict';
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // STATE
@@ -997,54 +1018,111 @@ function finishOpt() {
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // AI CHAT（使用 Claude API）
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-async function sendAIChat() {
-  const inp = $('aiInput');
-  const text = inp.value.trim();
+function sendAIChat() {
+  var inp = $('aiInput');
+  var text = inp ? inp.value.trim() : '';
   if (!text) return;
-  inp.value = '';
-  inp.style.height = 'auto';
-  $('aiSendBtn').disabled = true;
 
-  // Build context
-  const ctxLines = [];
+  var apiKey = localStorage.getItem('ds_key') || '';
+  if (!apiKey) { showKeyModal(); return; }
+
+  if (inp) { inp.value = ''; inp.style.height = 'auto'; }
+  var sendBtn = $('aiSendBtn');
+  if (sendBtn) sendBtn.disabled = true;
+
+  // Show user question in log
+  addLog('ai', '[你] <span style="color:#e2f0ff">' + text.replace(/</g,'&lt;') + '</span>');
+  // Show thinking indicator
+  addLog('ai', '[AI] <span style="color:var(--mist)" id="aiThinking">思考中…</span>');
+
+  // Build system prompt
+  var SEP = '\n';
+  var sysLines = [
+    '\u4f60\u662f\u6c34\u6ce5\u6d46\u56fa\u4e95\u914d\u65b9AI\u4f18\u5316\u4e13\u5bb6\uff0c\u7cbe\u901a\u6750\u6599\u79d1\u5b66\u4e0e\u8d1d\u53f6\u65af\u4f18\u5316\u3002\u8bf7\u7528\u7b80\u6d01\u4e13\u4e1a\u7684\u4e2d\u6587\u56de\u7b54\u3002',
+    '\n[\u53c2\u6570\u7a7a\u95f4]',
+    'Ca/Si[0.3~2.0]: C-S-H\u51dd\u80f6\u7c7b\u578b\uff0c\u6700\u4f18\u533a\u95f41.1~1.4',
+    'Al/Si[0~0.5]: \u9ad8\u6e29\u7a33\u5b9a\u5251\uff0c\u6700\u4f18\u533a\u95f40.08~0.18',
+    'W/C[0.30~0.70]: \u964d0.01\u5f3a\u5ea6\u63d02~3MPa\uff0c\u6700\u4f18\u533a\u95f40.36~0.42',
+    '\u7802\u6bd4[0~80%]: \u9002\u91cf30%\u53ef\u63d0\u5f3a\u5ea6\u5e76\u964d\u6e17\u900f\u7387',
+    '\u517b\u62a4\u65f6\u95f4[1~168h]: \u6700\u4f1848~96h',
+    '\u517b\u62a4\u6e29\u5ea6[20~350C]: 80~250C\u6700\u4f18\uff0c>280C\u5f3a\u5ea6\u4e0b\u964d',
+    '\n[\u76ee\u6807\u51fd\u6570]',
+    '\u7efc\u5408\u8bc4\u5206=(0.5*\u5f3a\u5ea6\u5206+0.25*\u6e17\u900f\u7387\u5206+0.15*\u7a20\u5316\u5206+0.1*\u5931\u6c34\u5206)*100',
+    '\n[\u7b97\u6cd5]',
+    'BO: GP+RBF\u6838+EI\u91c7\u96c6\uff0c\u6837\u672c\u6548\u7387\u6700\u9ad8',
+    'GA: \u79cd\u7fa4\u8fdb\u5316+\u4ea4\u53c9+\u53d8\u5f02',
+    'PSO: \u7fa4\u4f53\u667a\u80fd\uff0c\u6536\u655b\u5feb',
+    'CMA-ES: \u534f\u65b9\u5dee\u81ea\u9002\u5e94\uff0c\u9ad8\u7ef4\u7cbe\u7ec6\u8c03\u4f18'
+  ];
+  var ctxLines = ['\n[\u5f53\u524d\u4f18\u5316\u72b6\u6001]'];
+  ctxLines.push('\u7b97\u6cd5:' + algo + ' \u8fed\u4ee3:' + iter + '/' + maxIter + ' \u6210\u672c:' + cumCost.toFixed(0) + '\u5143');
   if (bestResult) {
-    ctxLines.push(`当前最优配方: Ca/Si=${bestResult.params.casi} Al/Si=${bestResult.params.alsi} W/C=${bestResult.params.wc} 砂比=${bestResult.params.sand}% 养护${bestResult.params.cure}h 温度${bestResult.params.temp}°C`);
-    ctxLines.push(`最优性能: 抗压强度=${bestResult.perf.str}MPa 渗透率=${bestResult.perf.perm}mD 稠化时间=${bestResult.perf.thick}min 失水量=${bestResult.perf.fluid}mL`);
-    ctxLines.push(`综合评分: ${bestResult.scoreVal.toFixed(2)}/100`);
+    var p = bestResult.params, f = bestResult.perf;
+    ctxLines.push('\u6700\u4f18\u8bc4\u5206:' + bestResult.scoreVal.toFixed(2) + '/100');
+    ctxLines.push('\u6700\u4f18\u914d\u65b9:Ca/Si=' + p.casi + ' Al/Si=' + p.alsi + ' W/C=' + p.wc + ' \u7802\u6bd4=' + p.sand + '% \u517b\u62a4' + p.cure + 'h \u6e29\u5ea6' + p.temp + 'C');
+    ctxLines.push('\u6700\u4f18\u6027\u80fd:\u5f3a\u5ea6=' + f.str + 'MPa \u6e17\u900f\u7387=' + f.perm + 'mD \u7a20\u5316=' + f.thick + 'min \u5931\u6c34=' + f.fluid + 'mL');
+  } else {
+    ctxLines.push('\u5c1a\u672a\u8fd0\u884c\u4f18\u5316\uff0c\u53ef\u5148\u8fd0\u884c\u4f18\u5316\u518d\u95ee\u95ee\u9898');
   }
-  ctxLines.push(`已完成迭代: ${history.length}次  总成本: ${cumCost.toFixed(0)}元`);
   if (history.length >= 3) {
-    const recent = history.slice(-3).map(r => `[${r.iter}]强度${r.perf.str}评分${r.scoreVal.toFixed(1)}`).join('  ');
-    ctxLines.push(`近期记录: ${recent}`);
+    ctxLines.push('\u6700\u8fd13\u6b21\u8bc4\u5206:' + history.slice(-3).map(function(r){return r.scoreVal.toFixed(1);}).join('>'));
   }
+  var systemPrompt = sysLines.join(SEP) + ctxLines.join(SEP);
 
-  addLog('ai', `[用户问] <span style="color:var(--frost)">${text}</span>`);
+  fetch('https://api.deepseek.com/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + apiKey
+    },
+    body: JSON.stringify({
+      model: 'deepseek-chat',
+      max_tokens: 1000,
+      temperature: 0.7,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: text }
+      ]
+    })
+  })
+  .then(function(resp) {
+    if (resp.status === 401 || resp.status === 403) throw new Error('KEY_INVALID');
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    return resp.json();
+  })
+  .then(function(data) {
+    // Remove thinking indicator
+    var thinking = document.getElementById('aiThinking');
+    if (thinking) thinking.parentElement.remove();
 
-  const systemPrompt = `你是水泥浆配方AI优化专家。当前正在进行贝叶斯优化实验，最大化抗压强度为主目标。
-参数空间：Ca/Si(0.3~2.0)、Al/Si(0~0.5)、W/C(0.3~0.7)、砂比(0~80%)、养护时间(1~168h)、温度(20~350°C)。
-${ctxLines.join('\n')}
-请用简洁的中文回答，结合材料科学原理，给出可操作的具体建议。`;
+    var reply = (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || '（无响应）';
+    // Show reply line by line in log
+    var lines = reply.split('\n');
+    for (var li = 0; li < lines.length; li++) {
+      var line = lines[li].trim();
+      if (line) addLog('ai', '<span style="color:#c8dff0">' + line.replace(/</g,'&lt;') + '</span>');
+    }
+  })
+  .catch(function(err) {
+    var thinking = document.getElementById('aiThinking');
+    if (thinking) thinking.parentElement.remove();
 
-  try {
-    const resp = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 1000,
-        system: systemPrompt,
-        messages: [{ role: 'user', content: text }]
-      })
-    });
-    const data = await resp.json();
-    const reply = data.content?.[0]?.text || '（无响应）';
-    addLog('ai', `[AI分析] <span style="color:var(--frost)">${reply.replace(/\n/g, '<br>')}</span>`);
-  } catch (e) {
-    addLog('err', `AI对话失败: ${e.message}（请检查网络连接）`);
-  }
-
-  $('aiSendBtn').disabled = false;
+    var msg;
+    if (err.message === 'KEY_INVALID') {
+      msg = 'API Key \u65e0\u6548\uff0c\u8bf7\u70b9\u51fb \u2699 Key \u91cd\u65b0\u8f93\u5165';
+      localStorage.removeItem('ds_key');
+    } else if (err.message.indexOf('fetch') >= 0 || err.message.indexOf('Failed') >= 0) {
+      msg = '\u7f51\u7edc\u8fde\u63a5\u5931\u8d25\uff0c\u8bf7\u68c0\u67e5\u7f51\u7edc';
+    } else {
+      msg = err.message;
+    }
+    addLog('err', 'AI\u5bf9\u8bdd\u5931\u8d25: ' + msg);
+  })
+  .then(function() {
+    if (sendBtn) sendBtn.disabled = false;
+  });
 }
+
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // UI HELPERS
@@ -1144,12 +1222,16 @@ function addHistItem(rec, isBest) {
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 function addLog(type, msg) {
   const term = $('terminal');
-  const elapsed = Math.floor((Date.now() - (startTs || Date.now())) / 1000);
-  const ts = `[${String(Math.floor(elapsed / 60)).padStart(2, '0')}:${String(elapsed % 60).padStart(2, '0')}]`;
+  if (!term) return;
+  const now = new Date();
+  const hh = String(now.getHours()).padStart(2,'0');
+  const mm = String(now.getMinutes()).padStart(2,'0');
+  const ss = String(now.getSeconds()).padStart(2,'0');
+  const ts = `[${hh}:${mm}:${ss}]`;
   const tags = { sys: 'SYS', ai: 'AI', net: 'NET', warn: 'WARN', err: 'ERR' };
   const div = document.createElement('div');
   div.className = 'log fade-in';
-  div.innerHTML = `<span class="log-ts">${ts}</span><span class="log-tag ${type}">[${tags[type]}]</span><span class="log-msg">${msg}</span>`;
+  div.innerHTML = `<span class="log-ts">${ts}</span><span class="log-tag ${type}">[${tags[type] || type}]</span><span class="log-msg">${msg}</span>`;
   term.appendChild(div);
   term.scrollTop = term.scrollHeight;
 }
@@ -1247,6 +1329,65 @@ $('aiInput').addEventListener('input', function() {
 
 // Init
 window.addEventListener('load', initCharts);
+
+window.handleStart  = handleStart;
+window.setAlgo      = setAlgo;
+window.toggleLock   = toggleLock;
+window.exportCSV    = exportCSV;
+window.sendAIChat   = sendAIChat;
+window.showKeyModal = showKeyModal;
+window.hideKeyModal = hideKeyModal;
+window.saveKey      = saveKey;
+function showKeyModal() {
+  var ov = document.getElementById('keyOverlay');
+  if (!ov) return;
+  ov.style.display = 'flex';
+  var inp = document.getElementById('keyInp');
+  if (inp) { inp.value=''; inp.placeholder=localStorage.getItem('ds_key')?'\u5df2\u4fdd\u5b58(\u91cd\u8f93\u53ef\u66f4\u65b0)':'sk-xxxxxxxxxxxxxxxxxxxxxxxx'; setTimeout(function(){inp.focus();},80); }
+  var hint=document.getElementById('keyHint');
+  if(hint){hint.textContent='Key\u4ec5\u4fdd\u5b58\u5728\u672c\u5730\u6d4f\u89c8\u5668';hint.style.color='#2e5480';}
+}
+function hideKeyModal() {
+  var ov = document.getElementById('keyOverlay');
+  if (ov) ov.style.display = 'none';
+}
+function saveKey() {
+  var inp=document.getElementById('keyInp'),hint=document.getElementById('keyHint');
+  if(!inp) return;
+  var k=inp.value.trim();
+  if(!k){if(localStorage.getItem('ds_key')){hideKeyModal();return;}if(hint){hint.textContent='\u8bf7\u8f93\u5165Key';hint.style.color='#f87171';}return;}
+  if(!k.startsWith('sk-')){if(hint){hint.textContent='Key\u5e94\u4ee5sk-\u5f00\u5934';hint.style.color='#f87171';}return;}
+  localStorage.setItem('ds_key',k);
+  if(hint){hint.textContent='\u2705 \u4fdd\u5b58\u6210\u529f\uff01';hint.style.color='#4ade80';}
+  setTimeout(function(){hideKeyModal();var ai=$('aiInput');if(ai)ai.focus();},700);
+}
+document.addEventListener('DOMContentLoaded',function(){
+  var ov=document.getElementById('keyOverlay');
+  if(ov) ov.addEventListener('click',function(e){if(e.target===ov)hideKeyModal();});
+  document.addEventListener('keydown',function(e){if(e.key==='Escape')hideKeyModal();});
+  if(!localStorage.getItem('ds_key')){
+    var term=$('terminal');
+    if(term){var h=document.createElement('div');h.className='log';h.innerHTML='<span class="log-msg" style="color:var(--mist)">\u8bf7\u5148\u70b9\u51fb\u8f93\u5165\u6846\u65c0\u7684 <strong style="color:var(--sky)">\u2699 Key</strong> \u8bbe\u7f6eDeepSeek\u5bc6\u94a5</span>';term.appendChild(h);}
+  }
+});
 </script>
+<div class="key-overlay" id="keyOverlay" style="display:none">
+  <div class="key-modal">
+    <button class="key-close" onclick="hideKeyModal()">&#x2715;</button>
+    <div class="key-modal-t">&#x1F916; 配置 DeepSeek AI</div>
+    <div class="key-modal-d">AI 已内置水泥浆优化专业知识，输入 API Key 即可直接提问。</div>
+    <ol class="key-steps">
+      <li>访问 <a href="https://platform.deepseek.com" target="_blank">platform.deepseek.com</a> 注册</li>
+      <li>点击「API Keys」&#x2192;「创建 API Key」</li>
+      <li>复制 Key（格式 <strong style="color:#9ec5e0">sk-xxxx</strong>）粘贴到下方</li>
+      <li>约 &#xA5;0.001/次，新用户有免费额度</li>
+    </ol>
+    <div class="key-row">
+      <input class="key-inp" id="keyInp" type="password" autocomplete="off" placeholder="sk-xxxxxxxxxxxxxxxxxxxxxxxx">
+      <button class="key-save" onclick="saveKey()">保存</button>
+    </div>
+    <div class="key-hint" id="keyHint">Key 仅保存在本地浏览器，不上传任何服务器</div>
+  </div>
+</div>
 </body>
 </html>
